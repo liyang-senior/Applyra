@@ -77,7 +77,6 @@ export function GeneratePanel({
   );
   const modelOptions = providerOption?.models || [];
   const jdCheck = useMemo(() => analyzeJobDescription(jd), [jd]);
-  const actionsBlocked = Boolean(jd.trim()) && !jdCheck.isRemote;
 
   useEffect(() => {
     let cancelled = false;
@@ -150,15 +149,14 @@ export function GeneratePanel({
       showToast("Enter a job description.", "error");
       return;
     }
-    if (!jdCheck.isRemote) {
-      showToast(jdCheck.remoteError || "Remote work not found in JD.", "error");
-      return;
+    if (jdCheck.remoteWarning) {
+      showToast(jdCheck.remoteWarning, "error");
     }
     if (jdCheck.clearanceWarning) {
       showToast(jdCheck.clearanceWarning, "error");
     }
     setPending(kind === "resume" ? "prompt-resume" : "prompt-cover");
-    setJobStatus("Received…");
+    setJobStatus("Preparing ChatGPT prompt…");
     try {
       const response = await fetch("/api/generate", {
         method: "POST",
@@ -180,14 +178,26 @@ export function GeneratePanel({
         return;
       }
       const data = (await response.json()) as {
+        result?: { mode?: string; prompt?: string; historyId?: string | null };
         jobId?: string;
         job?: { message?: string };
       };
-      if (!data.jobId) {
-        showToast("Could not queue prompt job.", "error");
+      // Fast path: prompt returned inline (no queue).
+      if (data.result?.mode === "prompt" && data.result.prompt) {
+        if (data.result.historyId) setHistoryId(data.result.historyId);
+        await navigator.clipboard.writeText(data.result.prompt);
+        showToast(
+          "Prompt copied. Paste into ChatGPT, then paste the reply below.",
+          "ok",
+        );
         return;
       }
-      setJobStatus(data.job?.message || "Queued…");
+      // Legacy/queued fallback
+      if (!data.jobId) {
+        showToast("Could not build prompt.", "error");
+        return;
+      }
+      setJobStatus(data.job?.message || "Preparing ChatGPT prompt…");
       const result = await waitForGenerateJob(data.jobId, {
         onStatus: (job) => setJobStatus(formatGenerateStatus(job)),
       });
@@ -231,9 +241,8 @@ export function GeneratePanel({
       showToast("Enter a job description.", "error");
       return;
     }
-    if (!jdCheck.isRemote) {
-      showToast(jdCheck.remoteError || "Remote work not found in JD.", "error");
-      return;
+    if (jdCheck.remoteWarning) {
+      showToast(jdCheck.remoteWarning, "error");
     }
     if (jdCheck.clearanceWarning) {
       showToast(jdCheck.clearanceWarning, "error");
@@ -287,9 +296,8 @@ export function GeneratePanel({
       showToast("Enter a job description.", "error");
       return;
     }
-    if (!jdCheck.isRemote) {
-      showToast(jdCheck.remoteError || "Remote work not found in JD.", "error");
-      return;
+    if (jdCheck.remoteWarning) {
+      showToast(jdCheck.remoteWarning, "error");
     }
     if (jdCheck.clearanceWarning) {
       showToast(jdCheck.clearanceWarning, "error");
@@ -300,7 +308,9 @@ export function GeneratePanel({
     }
 
     setPending(kind);
-    setJobStatus("Received…");
+    setJobStatus(
+      noApi ? "Building from ChatGPT reply…" : "Received…",
+    );
     try {
       const response = await fetch("/api/generate", {
         method: "POST",
@@ -331,7 +341,10 @@ export function GeneratePanel({
         showToast("Could not queue generation.", "error");
         return;
       }
-      setJobStatus(data.job?.message || "Queued…");
+      setJobStatus(
+        data.job?.message ||
+          (noApi ? "Building from ChatGPT reply…" : "Queued…"),
+      );
       const result = await waitForGenerateJob(data.jobId, {
         onStatus: (job) => setJobStatus(formatGenerateStatus(job)),
       });
@@ -512,9 +525,9 @@ export function GeneratePanel({
             />
           </label>
 
-          {jd.trim() && actionsBlocked ? (
-            <p className="rounded-xl border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-3 py-2 text-sm text-[var(--danger)]">
-              {jdCheck.remoteError}
+          {jd.trim() && jdCheck.remoteWarning ? (
+            <p className="rounded-xl border border-amber-500/40 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              {jdCheck.remoteWarning}
             </p>
           ) : null}
           {jd.trim() && jdCheck.clearanceWarning ? (
@@ -545,7 +558,7 @@ export function GeneratePanel({
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                disabled={Boolean(pending) || appliedPending || actionsBlocked}
+                disabled={Boolean(pending) || appliedPending}
                 onClick={() => void copyPrompt("resume")}
                 className="rounded-xl bg-[var(--green)] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
               >
@@ -553,7 +566,7 @@ export function GeneratePanel({
               </button>
               <button
                 type="button"
-                disabled={Boolean(pending) || appliedPending || actionsBlocked}
+                disabled={Boolean(pending) || appliedPending}
                 onClick={() => void copyPrompt("cover-letter")}
                 className="rounded-xl border border-[var(--line)] px-4 py-2.5 text-sm font-medium disabled:opacity-60"
               >
@@ -566,7 +579,7 @@ export function GeneratePanel({
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                disabled={Boolean(pending) || appliedPending || actionsBlocked}
+                disabled={Boolean(pending) || appliedPending}
                 onClick={() => generate("resume")}
                 className="rounded-xl bg-[var(--green)] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
               >
@@ -574,7 +587,7 @@ export function GeneratePanel({
               </button>
               <button
                 type="button"
-                disabled={Boolean(pending) || appliedPending || actionsBlocked}
+                disabled={Boolean(pending) || appliedPending}
                 onClick={() => generate("cover-letter")}
                 className="rounded-xl border border-[var(--line)] px-4 py-2.5 text-sm font-medium disabled:opacity-60"
               >
@@ -584,7 +597,7 @@ export function GeneratePanel({
               </button>
               <button
                 type="button"
-                disabled={Boolean(pending) || appliedPending || actionsBlocked}
+                disabled={Boolean(pending) || appliedPending}
                 onClick={() => void markApplied()}
                 className="rounded-xl border border-[var(--green)] px-4 py-2.5 text-sm font-medium text-[var(--green-deep)] disabled:opacity-60"
               >
@@ -611,7 +624,6 @@ export function GeneratePanel({
                 disabled={
                   Boolean(pending) ||
                   appliedPending ||
-                  actionsBlocked ||
                   !pasteText.trim()
                 }
                 onClick={() => generate("resume")}
@@ -624,7 +636,6 @@ export function GeneratePanel({
                 disabled={
                   Boolean(pending) ||
                   appliedPending ||
-                  actionsBlocked ||
                   !pasteText.trim()
                 }
                 onClick={() => generate("cover-letter")}
@@ -636,7 +647,7 @@ export function GeneratePanel({
               </button>
               <button
                 type="button"
-                disabled={Boolean(pending) || appliedPending || actionsBlocked}
+                disabled={Boolean(pending) || appliedPending}
                 onClick={() => void markApplied()}
                 className="rounded-xl border border-[var(--green)] px-4 py-2.5 text-sm font-medium text-[var(--green-deep)] disabled:opacity-60"
               >

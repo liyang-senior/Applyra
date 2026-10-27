@@ -4,11 +4,13 @@ import {
   resolveDefaultProvider,
   type AiProvider,
 } from "@/lib/ai/providers";
+import { generateCoverLetterFile } from "@/lib/generate/cover-letter";
 import {
   enqueueGenerateJob,
   getGenerateJob,
   getQueueSnapshot,
 } from "@/lib/generate/queue";
+import { generateResumeFile } from "@/lib/generate/resume";
 import { analyzeJobDescription } from "@/lib/jd-checks";
 import { findAppliedDuplicate } from "@/lib/history";
 import { getCapacitySnapshot } from "@/lib/server/capacity";
@@ -80,13 +82,6 @@ export async function POST(request: Request) {
   if (!targetRole) return jsonError("Enter a job title.", 400);
 
   const jdCheck = analyzeJobDescription(jd);
-  if (!jdCheck.isRemote) {
-    return jsonError(
-      jdCheck.remoteError ||
-        "This job description does not mention remote / work-from-home.",
-      400,
-    );
-  }
 
   if (!(await userCanAccessProfile(user, profileId))) {
     return jsonError("Profile not found.", 404);
@@ -108,6 +103,59 @@ export async function POST(request: Request) {
   const provider: AiProvider = isAiProvider(body.provider)
     ? body.provider
     : resolveDefaultProvider();
+  const pastedResponse = body.pastedResponse
+    ? String(body.pastedResponse)
+    : undefined;
+
+  // ChatGPT copy-prompt is local template work — return immediately (no queue/poll).
+  if (provider === "chatgpt" && !String(pastedResponse || "").trim()) {
+    try {
+      const built =
+        kind === "cover-letter"
+          ? await generateCoverLetterFile({
+              profileData: profile.data,
+              jd,
+              companyName,
+              targetRole,
+              provider,
+              format,
+            })
+          : await generateResumeFile({
+              profileData: profile.data,
+              jd,
+              companyName,
+              targetRole,
+              provider,
+              format,
+            });
+      if (built.mode !== "prompt" || !built.prompt) {
+        return jsonError("Could not build prompt.", 500);
+      }
+      return NextResponse.json({
+        result: {
+          mode: "prompt" as const,
+          prompt: built.prompt,
+          provider,
+          model: null,
+          kind,
+          historyId,
+          requiresClearance: jdCheck.requiresClearance,
+          isRemote: jdCheck.isRemote,
+          clearanceWarning: jdCheck.clearanceWarning,
+          remoteWarning: jdCheck.remoteWarning,
+        },
+        requiresClearance: jdCheck.requiresClearance,
+        isRemote: jdCheck.isRemote,
+        clearanceWarning: jdCheck.clearanceWarning,
+        remoteWarning: jdCheck.remoteWarning,
+      });
+    } catch (error) {
+      return jsonError(
+        error instanceof Error ? error.message : "Could not build prompt.",
+        500,
+      );
+    }
+  }
 
   const enqueued = enqueueGenerateJob({
     userId: user.id,
@@ -121,11 +169,11 @@ export async function POST(request: Request) {
     model,
     format,
     historyId,
-    pastedResponse: body.pastedResponse
-      ? String(body.pastedResponse)
-      : undefined,
+    pastedResponse,
     requiresClearance: jdCheck.requiresClearance,
+    isRemote: jdCheck.isRemote,
     clearanceWarning: jdCheck.clearanceWarning,
+    remoteWarning: jdCheck.remoteWarning,
   });
 
   if (!enqueued.ok) {
@@ -139,7 +187,9 @@ export async function POST(request: Request) {
       queue: getQueueSnapshot(user.id),
       capacity: getCapacitySnapshot(),
       requiresClearance: jdCheck.requiresClearance,
+      isRemote: jdCheck.isRemote,
       clearanceWarning: jdCheck.clearanceWarning,
+      remoteWarning: jdCheck.remoteWarning,
     },
     { status: 202 },
   );

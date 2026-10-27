@@ -1,31 +1,46 @@
 {
+  "ssn": "9118",
+  "zip": "46227",
   "name": "Joshua Eric Person",
-  "title": "Cloud & DevOps Engineer",
   "email": "joshuaopokubamfo@gmail.com",
   "phone": "+1 4632276949",
-  "location": "Indianapolis, IN",
-  "zip": "46227",
-  "linkedin": "https://linkedin.com/in/joshua-person-4751655a",
-  "website": "",
-  "github": "",
+  "title": "Cloud & DevOps Engineer",
   "cvLink": "https://flowcv.com/resume/gm5gsiwfjn7i",
-  "base_skills": [
-    "Cloud Engineering: Amazon Web Services (AWS), Amazon EC2, Amazon S3, Cloud Infrastructure, Infrastructure as Code (IaC), Cloud Environment Assessment, Cloud Support, Salesforce Hyperforce",
-    "Infrastructure & Automation: Terraform, AWS CloudFormation, Terraform Modules, Bash Scripting, Cloud Provisioning, Infrastructure Configuration, Automation, Git-Based Infrastructure Changes",
-    "Cloud Operations & Troubleshooting: Cloud Networking, DNS, IAM, Environment Validation, Infrastructure Troubleshooting, Production Incident Triage, Root-Cause Analysis, Technical Escalation",
-    "Enterprise Platforms & Applications: Salesforce Service Cloud, Salesforce Developer Console, Salesforce Workbench, Salesforce Setup, Microsoft 365, Windows Server, Hospital Information Systems (HIS), Electronic Medical Records (EMR)",
-    "Support & Service Management: ServiceNow, Jira Service Management, Incident Management, Change Management, Customer Escalation, Production Support, Issue Reproduction, Knowledge Transfer, Technical Documentation",
-    "Application & Systems Support: Linux, Application Log Analysis, Cloud Monitoring, Software Configuration, Middleware Integration, Customer Support, System Administration, Hardware Troubleshooting",
-    "Data & Reporting: SQL, Cognos Report Studio, Aqua Data, Reporting, Data Validation, Issue Analysis, Operational Documentation",
-    "Professional Practices: Cross-Functional Collaboration, Customer Communication, Technical Problem Solving, User Support, Stakeholder Coordination, Requirements Clarification"
+  "gender": "male",
+  "github": "",
+  "street": "1614 Stop 11 Rd, Apt 2",
+  "website": "",
+  "birthday": "3/14/1988",
+  "linkedin": "https://linkedin.com/in/joshua-person-4751655a",
+  "location": "Indianapolis, IN",
+  "education": [
+    {
+      "degree": "Cloud Certification (Hands-on AWS SysOps Boot Camp)",
+      "school": "Indiana Wesleyan University",
+      "end_year": "2022",
+      "start_year": "2022"
+    },
+    {
+      "degree": "Bachelor of Science (Business Information Systems)",
+      "school": "Indiana Wesleyan University",
+      "end_year": "2020",
+      "start_year": "2017"
+    },
+    {
+      "degree": "Information Technology",
+      "school": "University of Indianapolis",
+      "end_year": "2012",
+      "start_year": "2007"
+    }
   ],
+  "techStack": "Cloud",
   "experience": [
     {
-      "company": "Salesforce",
       "title": "Cloud Engineer, Technical Support",
-      "start_date": "12/2023",
+      "company": "Salesforce",
       "end_date": "10/2026",
       "location": "Indianapolis, IN",
+      "start_date": "12/2023",
       "base_bullets": [
         "Supported production customer escalations for Salesforce Service Cloud, investigating reported behavior, reproducing issues, and coordinating with engineering teams to move complex cases toward resolution.",
         "Reviewed customer organization settings and platform configuration using Salesforce Setup, Developer Console, and Workbench to narrow down application and environment issues.",
@@ -38,11 +53,11 @@
       ]
     },
     {
-      "company": "Nexus Technologies Group, LLC",
       "title": "Cloud Consultant — Contract",
-      "start_date": "05/2022",
+      "company": "Nexus Technologies Group, LLC",
       "end_date": "12/2023",
       "location": "Indianapolis, IN",
+      "start_date": "05/2022",
       "base_bullets": [
         "Supported AWS cloud infrastructure consulting engagements, reviewing existing environments and helping plan cloud configuration and infrastructure improvements.",
         "Developed and maintained infrastructure definitions with Terraform and AWS CloudFormation, using version-controlled changes to keep deployments repeatable.",
@@ -55,11 +70,11 @@
       ]
     },
     {
-      "company": "Indiana University Health",
       "title": "Systems Analyst Intermediate",
-      "start_date": "12/2020",
+      "company": "Indiana University Health",
       "end_date": "12/2023",
       "location": "Indianapolis, IN",
+      "start_date": "12/2020",
       "base_bullets": [
         "Resolved clinical, business, and end-user issues through the ServiceNow support queue, supporting hospital staff with application, Windows Server, and Microsoft 365 problems.",
         "Performed initial triage of system incidents, checking DNS, network connectivity, workstation behavior, and available monitoring information before escalating complex issues.",
@@ -71,11 +86,11 @@
       ]
     },
     {
-      "company": "Genesys",
       "title": "Sr. Cloud Engineer",
-      "start_date": "08/2020",
+      "company": "Genesys",
       "end_date": "12/2020",
       "location": "Indianapolis, IN",
+      "start_date": "08/2020",
       "base_bullets": [
         "Supported AWS cloud engineering and infrastructure operations, including EC2 resources, networking, and environment configuration.",
         "Used Bash scripting to assist with repeatable cloud administration and operational support activities.",
@@ -85,11 +100,11 @@
       ]
     },
     {
-      "company": "Brock Solutions",
       "title": "Software Support Engineer",
-      "start_date": "03/2019",
+      "company": "Brock Solutions",
       "end_date": "08/2020",
       "location": "Irving, TX",
+      "start_date": "03/2019",
       "base_bullets": [
         "Managed Jira Service Management tickets for airport customers using baggage-handling and real-time automation software across Linux and Windows Server environments.",
         "Investigated reported application issues by reviewing logs, reproducing customer scenarios, and collecting technical evidence for product engineering escalation.",
@@ -100,27 +115,14 @@
       ]
     }
   ],
-  "education": [
-    {
-      "degree": "Cloud Certification (Hands-on AWS SysOps Boot Camp)",
-      "school": "Indiana Wesleyan University",
-      "start_year": "2022",
-      "end_year": "2022"
-    },
-    {
-      "degree": "Bachelor of Science (Business Information Systems)",
-      "school": "Indiana Wesleyan University",
-      "start_year": "2017",
-      "end_year": "2020"
-    },
-    {
-      "degree": "Information Technology",
-      "school": "University of Indianapolis",
-      "start_year": "2007",
-      "end_year": "2012"
-    }
-  ],
-  "street": "1614 Stop 11 Rd, Apt 2",
-  "birthday": "3/14/1988",
-  "ssn": "9118"
+  "base_skills": [
+    "Cloud Engineering: Amazon Web Services (AWS), Amazon EC2, Amazon S3, Cloud Infrastructure, Infrastructure as Code (IaC), Cloud Environment Assessment, Cloud Support, Salesforce Hyperforce",
+    "Infrastructure & Automation: Terraform, AWS CloudFormation, Terraform Modules, Bash Scripting, Cloud Provisioning, Infrastructure Configuration, Automation, Git-Based Infrastructure Changes",
+    "Cloud Operations & Troubleshooting: Cloud Networking, DNS, IAM, Environment Validation, Infrastructure Troubleshooting, Production Incident Triage, Root-Cause Analysis, Technical Escalation",
+    "Enterprise Platforms & Applications: Salesforce Service Cloud, Salesforce Developer Console, Salesforce Workbench, Salesforce Setup, Microsoft 365, Windows Server, Hospital Information Systems (HIS), Electronic Medical Records (EMR)",
+    "Support & Service Management: ServiceNow, Jira Service Management, Incident Management, Change Management, Customer Escalation, Production Support, Issue Reproduction, Knowledge Transfer, Technical Documentation",
+    "Application & Systems Support: Linux, Application Log Analysis, Cloud Monitoring, Software Configuration, Middleware Integration, Customer Support, System Administration, Hardware Troubleshooting",
+    "Data & Reporting: SQL, Cognos Report Studio, Aqua Data, Reporting, Data Validation, Issue Analysis, Operational Documentation",
+    "Professional Practices: Cross-Functional Collaboration, Customer Communication, Technical Problem Solving, User Support, Stakeholder Coordination, Requirements Clarification"
+  ]
 }

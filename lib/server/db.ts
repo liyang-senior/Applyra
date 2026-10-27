@@ -1,6 +1,6 @@
 import { Pool, type PoolClient } from "pg";
 
-const SCHEMA_VERSION = 6;
+const SCHEMA_VERSION = 9;
 
 const globalForPg = globalThis as typeof globalThis & {
   applyraPool?: Pool;
@@ -25,6 +25,8 @@ export async function ensureSchema() {
     globalForPg.applyraSchemaVersion === SCHEMA_VERSION
   ) {
     await globalForPg.applyraSchema;
+    // Cheap idempotent safety net — version cache must never skip critical columns.
+    await ensureCriticalApplicationColumns();
     return;
   }
   globalForPg.applyraSchemaVersion = SCHEMA_VERSION;
@@ -34,6 +36,18 @@ export async function ensureSchema() {
     throw error;
   });
   await globalForPg.applyraSchema;
+}
+
+async function ensureCriticalApplicationColumns() {
+  const pool = getPool();
+  await pool.query(`
+    ALTER TABLE applications
+    ADD COLUMN IF NOT EXISTS requires_clearance boolean NOT NULL DEFAULT false
+  `);
+  await pool.query(`
+    ALTER TABLE applications
+    ADD COLUMN IF NOT EXISTS is_remote boolean NOT NULL DEFAULT true
+  `);
 }
 
 async function createSchema() {
@@ -106,6 +120,7 @@ async function createSchema() {
       provider text,
       model text,
       requires_clearance boolean NOT NULL DEFAULT false,
+      is_remote boolean NOT NULL DEFAULT true,
       generated_at timestamptz,
       created_at timestamptz NOT NULL,
       applied_at timestamptz,
@@ -143,10 +158,7 @@ async function createSchema() {
     ALTER TABLE applications
     ADD COLUMN IF NOT EXISTS updated_at timestamptz
   `);
-  await pool.query(`
-    ALTER TABLE applications
-    ADD COLUMN IF NOT EXISTS requires_clearance boolean NOT NULL DEFAULT false
-  `);
+  await ensureCriticalApplicationColumns();
   await pool.query(`
     ALTER TABLE applications
     ADD COLUMN IF NOT EXISTS job_link text NOT NULL DEFAULT ''

@@ -59,6 +59,7 @@ export function HistoryPanel({
     jobTitle: "",
     status: "all" as "all" | "draft" | "applied" | "rejected",
     clearance: "all" as "all" | "flagged" | "clear",
+    remote: "all" as "all" | "non-remote" | "remote",
   });
 
   const filteredRecords = useMemo(() => {
@@ -72,6 +73,12 @@ export function HistoryPanel({
         return false;
       }
       if (filters.clearance === "clear" && record.requiresClearance) {
+        return false;
+      }
+      if (filters.remote === "non-remote" && record.isRemote) {
+        return false;
+      }
+      if (filters.remote === "remote" && !record.isRemote) {
         return false;
       }
       if (companyQ && !record.companyName.toLowerCase().includes(companyQ)) {
@@ -250,7 +257,7 @@ export function HistoryPanel({
   return (
     <div className="w-full space-y-4">
       {toastHost}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {canFilterUsers ? (
           <label className="block text-sm">
             <span className="mb-1 block font-medium">User</span>
@@ -328,6 +335,24 @@ export function HistoryPanel({
             <option value="all">All</option>
             <option value="flagged">Clearance / public trust flagged</option>
             <option value="clear">No clearance flag</option>
+          </select>
+        </label>
+        <label className="block text-sm">
+          <span className="mb-1 block font-medium">Location</span>
+          <select
+            className={fieldClass}
+            value={filters.remote}
+            disabled={pending || bulkPending}
+            onChange={(event) =>
+              updateFilter(
+                "remote",
+                event.target.value as "all" | "non-remote" | "remote",
+              )
+            }
+          >
+            <option value="all">All</option>
+            <option value="non-remote">Flagged as hybrid / onsite</option>
+            <option value="remote">No hybrid / onsite flag</option>
           </select>
         </label>
       </div>
@@ -466,13 +491,21 @@ export function HistoryPanel({
                       ) : null}
                     </td>
                     <td className="px-3 py-3 sm:px-4">
-                      {record.requiresClearance ? (
-                        <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
-                          Clearance
-                        </span>
-                      ) : (
-                        <span className="text-[var(--muted)]">—</span>
-                      )}
+                      <div className="flex flex-wrap gap-1">
+                        {record.requiresClearance ? (
+                          <span className="inline-flex rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                            Clearance
+                          </span>
+                        ) : null}
+                        {!record.isRemote ? (
+                          <span className="inline-flex rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-900">
+                            Hybrid / onsite
+                          </span>
+                        ) : null}
+                        {record.requiresClearance || !record.isRemote ? null : (
+                          <span className="text-[var(--muted)]">—</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-3 py-3 sm:px-4">
                       <dl className="space-y-1 text-xs sm:text-sm">

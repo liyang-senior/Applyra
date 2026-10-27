@@ -1,4 +1,3 @@
 # OPTIONAL EXTEND PROMPT
-# Edit this file to add extra rules without changing default.txt.
 # Lines starting with # are ignored. Non-comment content is appended to the main prompt.
-
+# Keep this empty unless you need a temporary one-off override.

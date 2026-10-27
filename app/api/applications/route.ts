@@ -52,13 +52,6 @@ export async function POST(request: Request) {
   const jobLink = String(body.jobLink || "").trim();
   if (!jobLink) return jsonError("Enter a job link.", 400);
   const jdCheck = analyzeJobDescription(jobDescription);
-  if (!jdCheck.isRemote) {
-    return jsonError(
-      jdCheck.remoteError ||
-        "This job description does not mention remote / work-from-home.",
-      400,
-    );
-  }
 
   const result = await markHistoryApplied({
     userId: user.id,
@@ -69,13 +62,16 @@ export async function POST(request: Request) {
     jobDescription,
     jobLink,
     requiresClearance: jdCheck.requiresClearance,
+    isRemote: jdCheck.isRemote,
   });
   if (!result.ok) return jsonError(result.error, 400);
   return NextResponse.json({
     id: result.id,
     status: "applied",
     requiresClearance: jdCheck.requiresClearance,
+    isRemote: jdCheck.isRemote,
     clearanceWarning: jdCheck.clearanceWarning,
+    remoteWarning: jdCheck.remoteWarning,
   });
 }
 

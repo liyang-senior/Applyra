@@ -21,6 +21,7 @@ export type HistoryRecord = {
   provider: string | null;
   model: string | null;
   requiresClearance: boolean;
+  isRemote: boolean;
   createdAt: string;
   generatedAt: string | null;
   appliedAt: string | null;
@@ -45,6 +46,7 @@ type HistoryRow = {
   provider: string | null;
   model: string | null;
   requires_clearance: boolean | null;
+  is_remote: boolean | null;
   created_at: Date;
   generated_at: Date | null;
   applied_at: Date | null;
@@ -85,6 +87,7 @@ function toRecord(row: HistoryRow): HistoryRecord {
     provider: row.provider,
     model: row.model,
     requiresClearance: Boolean(row.requires_clearance),
+    isRemote: row.is_remote !== false,
     createdAt,
     generatedAt: asIso(row.generated_at),
     appliedAt: asIso(row.applied_at),
@@ -181,6 +184,7 @@ export async function saveGeneratedHistory(input: {
   model?: string | null;
   historyId?: string | null;
   requiresClearance?: boolean;
+  isRemote?: boolean;
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const companyName = input.companyName.trim();
   const jobTitle = input.jobTitle.trim();
@@ -189,6 +193,7 @@ export async function saveGeneratedHistory(input: {
   if (!jobDescription) return { ok: false, error: "Enter a job description." };
   if (!jobLink) return { ok: false, error: "Enter a job link." };
   const requiresClearance = Boolean(input.requiresClearance);
+  const isRemote = input.isRemote !== false;
 
   const duplicate = await findAppliedDuplicate({
     userId: input.userId,
@@ -225,8 +230,9 @@ export async function saveGeneratedHistory(input: {
              provider = COALESCE($10, provider),
              model = COALESCE($11, model),
              requires_clearance = $12,
-             generated_at = CASE WHEN $14::boolean THEN $13 ELSE generated_at END,
-             updated_at = $13
+             is_remote = $13,
+             generated_at = CASE WHEN $15::boolean THEN $14 ELSE generated_at END,
+             updated_at = $14
            WHERE id = $1`,
           [
             input.historyId,
@@ -241,6 +247,7 @@ export async function saveGeneratedHistory(input: {
             input.provider || null,
             input.model || null,
             requiresClearance,
+            isRemote,
             now,
             hasOutput,
           ],
@@ -276,8 +283,9 @@ export async function saveGeneratedHistory(input: {
            provider = COALESCE($6, provider),
            model = COALESCE($7, model),
            requires_clearance = $8,
-           generated_at = CASE WHEN $10::boolean THEN $9 ELSE generated_at END,
-           updated_at = $9
+           is_remote = $9,
+           generated_at = CASE WHEN $11::boolean THEN $10 ELSE generated_at END,
+           updated_at = $10
          WHERE id = $1`,
         [
           id,
@@ -288,6 +296,7 @@ export async function saveGeneratedHistory(input: {
           input.provider || null,
           input.model || null,
           requiresClearance,
+          isRemote,
           now,
           hasOutput,
         ],
@@ -301,12 +310,12 @@ export async function saveGeneratedHistory(input: {
     await client.query(
       `INSERT INTO applications (
          id, user_id, profile_id, company_name, job_title, job_description, job_link,
-         resume_json, cover_letter, status, provider, model, requires_clearance,
+         resume_json, cover_letter, status, provider, model, requires_clearance, is_remote,
          created_at, generated_at, applied_at, updated_at
        ) VALUES (
          $1, $2, $3, $4, $5, $6, $7,
-         $8::jsonb, $9, 'draft', $10, $11, $12,
-         $13, $14, NULL, $13
+         $8::jsonb, $9, 'draft', $10, $11, $12, $13,
+         $14, $15, NULL, $14
        )`,
       [
         id,
@@ -321,6 +330,7 @@ export async function saveGeneratedHistory(input: {
         input.provider || null,
         input.model || null,
         requiresClearance,
+        isRemote,
         now,
         hasOutput ? now : null,
       ],
@@ -338,6 +348,7 @@ export async function markHistoryApplied(input: {
   jobDescription: string;
   jobLink: string;
   requiresClearance?: boolean;
+  isRemote?: boolean;
 }): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const companyName = input.companyName.trim();
   const jobTitle = input.jobTitle.trim();
@@ -348,6 +359,7 @@ export async function markHistoryApplied(input: {
   if (!jobDescription) return { ok: false, error: "Enter a job description." };
   if (!jobLink) return { ok: false, error: "Enter a job link." };
   const requiresClearance = Boolean(input.requiresClearance);
+  const isRemote = input.isRemote !== false;
 
   const duplicate = await findAppliedDuplicate({
     userId: input.userId,
@@ -383,6 +395,7 @@ export async function markHistoryApplied(input: {
              job_link = $7,
              profile_id = COALESCE($8, profile_id),
              requires_clearance = $9,
+             is_remote = $10,
              updated_at = $3
            WHERE id = $1`,
           [
@@ -395,6 +408,7 @@ export async function markHistoryApplied(input: {
             jobLink,
             input.profileId || null,
             requiresClearance,
+            isRemote,
           ],
         );
         return { ok: true, id: input.historyId };
@@ -422,9 +436,10 @@ export async function markHistoryApplied(input: {
            applied_at = $2,
            job_link = $3,
            requires_clearance = $4,
+           is_remote = $5,
            updated_at = $2
          WHERE id = $1`,
-        [id, now, jobLink, requiresClearance],
+        [id, now, jobLink, requiresClearance, isRemote],
       );
       return { ok: true, id };
     }
@@ -433,12 +448,12 @@ export async function markHistoryApplied(input: {
     await client.query(
       `INSERT INTO applications (
          id, user_id, profile_id, company_name, job_title, job_description, job_link,
-         resume_json, cover_letter, status, provider, model, requires_clearance,
+         resume_json, cover_letter, status, provider, model, requires_clearance, is_remote,
          created_at, applied_at, updated_at
        ) VALUES (
          $1, $2, $3, $4, $5, $6, $7,
-         NULL, NULL, 'applied', NULL, NULL, $8,
-         $9, $9, $9
+         NULL, NULL, 'applied', NULL, NULL, $8, $9,
+         $10, $10, $10
        )`,
       [
         id,
@@ -449,6 +464,7 @@ export async function markHistoryApplied(input: {
         jobDescription,
         jobLink,
         requiresClearance,
+        isRemote,
         now,
       ],
     );

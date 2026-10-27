@@ -1,0 +1,37 @@
+[
+  {
+    "name": "Interest",
+    "body": "Hi,\n\nThank you for reaching out.\nI am very interested in this position and would appreciate learning about the next steps.\n\nWarm regards,",
+    "sortOrder": 10
+  },
+  {
+    "name": "Interest+CV",
+    "body": "Hi,\n\nThank you for reaching out.\nI am very interested in this position and would appreciate learning about the next steps.\nPlease find my updated resume attached to this email\n\nBest regards,",
+    "sortOrder": 20
+  },
+  {
+    "name": "Remote",
+    "body": "Hi,\n\nThank you so much for reaching out—I really appreciate you thinking of me.\nRight now, I'm focusing only on fully remote roles, so I won't be able to move forward with an onsite position. I'd love to stay in touch though, and please feel free to reach out if any remote opportunities come up.\n\nThank you again!",
+    "sortOrder": 30
+  },
+  {
+    "name": "Nobody@Meeting",
+    "body": "Hi,\n\nI joined the meeting about 10 minutes ago using the provided link, but it looks like no one has joined yet. Just wanted to check if everything is okay or if there's been any change in timing.\nHappy to reschedule if needed—please let me know.\n\nThanks,",
+    "sortOrder": 40
+  },
+  {
+    "name": "Reschedule Today's Meeting",
+    "body": "Hi,\n\nI wanted to let you know that something urgent came up today, and I won't be able to make our meeting. Sorry for the short notice.\nCould we please reschedule for another time? I'm happy to work around your availability.\nThanks for understanding, and I look forward to connecting soon.\n\nBest,",
+    "sortOrder": 50
+  },
+  {
+    "name": "Missed Phone",
+    "body": "Hi,\n\nSorry I missed your call earlier. I'm tied up with a few back-to-back commitments today and won't be available for a phone call.\nI'd be happy to connect at another time—please let me know what works for you, and I'll do my best to accommodate.\n\nThanks,",
+    "sortOrder": 60
+  },
+  {
+    "name": "Salary",
+    "body": "Hi,\n\nI'm targeting around $60/hour on W2, but I'm open to discussing based on the role and overall scope.\nHappy to chat further!\n\nBest,",
+    "sortOrder": 70
+  }
+]

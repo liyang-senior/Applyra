@@ -1,0 +1,18 @@
+{
+  "profiles": [
+    {
+      "file": "Joshua_Eric_Person.json",
+      "name": "Joshua Eric Person",
+      "email": "joshuaopokubamfo@gmail.com",
+      "gender": "male",
+      "techStack": "Cloud"
+    },
+    {
+      "file": "Elvis_Edinge.json",
+      "name": "Elvis Edinge",
+      "email": "elviseedinge@gmail.com",
+      "gender": "male",
+      "techStack": "DevOps"
+    }
+  ]
+}

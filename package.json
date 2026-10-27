@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
-    "@react-pdf/renderer": "^3.4.4",
+    "@react-pdf/renderer": "^4.9.0",
     "bcryptjs": "^2.4.3",
     "docx": "^9.0.0",
     "jsonc-parser": "^3.3.1",

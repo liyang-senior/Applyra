@@ -1,3 +1,7 @@
+/**
+ * Sync resume_profiles from data/seed-profiles (manifest + JSON).
+ * Prefer: node scripts/export-seeds-from-db.mjs  then this, or rely on ensureSchema.
+ */
 import { randomUUID } from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
@@ -33,20 +37,18 @@ if (!connectionString) {
 
 const pool = new pg.Pool({ connectionString });
 const seedDir = path.join(root, "data", "seed-profiles");
-const seeds = [
-  {
-    file: "Joshua_Eric_Person.json",
-    gender: "male",
-    techStack:
-      "AWS, Terraform, CloudFormation, Salesforce, ServiceNow, Linux, SQL",
-  },
-  {
-    file: "Elvis_Edinge.json",
-    gender: "male",
-    techStack:
-      "AWS, Terraform, Ansible, Jenkins, Docker, Prometheus, Grafana, Linux",
-  },
-];
+const manifestPath = path.join(seedDir, "manifest.json");
+
+let seeds = [];
+try {
+  const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
+  seeds = Array.isArray(manifest.profiles) ? manifest.profiles : [];
+} catch {
+  const entries = await fs.readdir(seedDir);
+  seeds = entries
+    .filter((name) => name.endsWith(".json") && name !== "manifest.json")
+    .map((file) => ({ file }));
+}
 
 await pool.query(`
   CREATE TABLE IF NOT EXISTS resume_profiles (
@@ -63,8 +65,8 @@ for (const seed of seeds) {
   );
   const data = {
     ...raw,
-    gender: seed.gender,
-    techStack: seed.techStack,
+    gender: seed.gender || raw.gender || "unspecified",
+    techStack: seed.techStack || raw.techStack || "",
     street: raw.street || "",
     birthday: raw.birthday || "",
     ssn: raw.ssn || "",

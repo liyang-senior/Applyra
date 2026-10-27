@@ -2,28 +2,20 @@ export type JdAnalysis = {
   isRemote: boolean;
   requiresClearance: boolean;
   remoteMatches: string[];
+  locationMatches: string[];
   clearanceMatches: string[];
-  remoteError: string | null;
+  remoteWarning: string | null;
   clearanceWarning: string | null;
 };
 
-/** Phrases that indicate remote / WFH eligibility. */
-const REMOTE_PATTERNS: RegExp[] = [
-  /\bremote\b/i,
-  /\bwork[\s-]*from[\s-]*home\b/i,
-  /\bwfh\b/i,
-  /\btelework(?:ing)?\b/i,
-  /\btelecommut(?:e|ing)\b/i,
-  /\bfully[\s-]*remote\b/i,
-  /\b100%\s*remote\b/i,
-  /\bremote[\s-]*first\b/i,
-  /\bremote[\s-]*friendly\b/i,
-  /\bremote[\s-]*ok\b/i,
-  /\bremote[\s-]*optional\b/i,
-  /\bdistributed\s+team\b/i,
-  /\bwork\s+remotely\b/i,
-  /\banywhere\s+in\s+the\s+(?:us|u\.s\.|united\s+states)\b/i,
-  /\blocation:\s*remote\b/i,
+/** Hybrid / onsite location requirements to warn and flag. */
+const LOCATION_FLAG_PATTERNS: RegExp[] = [
+  /\bhybrid\b/i,
+  /\bonsite\b/i,
+  /\bon[\s-]*site\b/i,
+  /\bin[\s-]*office\b/i,
+  /\bin[\s-]*person\b/i,
+  /\bon[\s-]*prem(?:ises)?\b/i,
 ];
 
 /** Security clearance / public trust requirements to flag. */
@@ -54,29 +46,23 @@ function collectMatches(text: string, patterns: RegExp[]): string[] {
 
 export function analyzeJobDescription(jd: string): JdAnalysis {
   const text = String(jd || "");
-  const remoteMatches = collectMatches(text, REMOTE_PATTERNS);
+  const locationMatches = collectMatches(text, LOCATION_FLAG_PATTERNS);
   const clearanceMatches = collectMatches(text, CLEARANCE_PATTERNS);
-  const isRemote = remoteMatches.length > 0;
+  const hasHybridOrOnsite = locationMatches.length > 0;
+  const isRemote = !hasHybridOrOnsite;
   const requiresClearance = clearanceMatches.length > 0;
 
   return {
     isRemote,
     requiresClearance,
-    remoteMatches,
+    remoteMatches: locationMatches,
+    locationMatches,
     clearanceMatches,
-    remoteError: isRemote
-      ? null
-      : "This job description does not mention remote / work-from-home. Generate and Applied are blocked.",
+    remoteWarning: hasHybridOrOnsite
+      ? `Warning: JD mentions hybrid / onsite (${locationMatches.join(", ")}). It will be flagged in History.`
+      : null,
     clearanceWarning: requiresClearance
       ? `Warning: JD may require clearance or public trust (${clearanceMatches.join(", ")}). Proceed only if appropriate — it will be flagged in History.`
       : null,
   };
-}
-
-export function assertRemoteJobDescription(jd: string): JdAnalysis | { ok: false; error: string } {
-  const analysis = analyzeJobDescription(jd);
-  if (!analysis.isRemote) {
-    return { ok: false, error: analysis.remoteError || "Remote work not found in JD." };
-  }
-  return analysis;
 }

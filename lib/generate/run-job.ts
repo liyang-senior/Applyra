@@ -17,7 +17,15 @@ export async function runGenerateJob(
     throw new Error("Profile not found.");
   }
 
-  setStatus("generating", "Generating with AI…");
+  const chatgpt = input.provider === "chatgpt";
+  const hasPaste = Boolean(String(input.pastedResponse || "").trim());
+  if (chatgpt && !hasPaste) {
+    setStatus("generating", "Building ChatGPT prompt…");
+  } else if (chatgpt && hasPaste) {
+    setStatus("generating", "Using ChatGPT reply…");
+  } else {
+    setStatus("generating", "Generating with AI…");
+  }
 
   const result =
     input.kind === "cover-letter"
@@ -44,8 +52,15 @@ export async function runGenerateJob(
 
   let historyId: string | null = input.historyId;
 
+  if (result.mode === "prompt") {
+    setStatus("building", "Copying prompt to clipboard…");
+  }
+
   if (result.mode === "file") {
-    setStatus("building", "Building document…");
+    setStatus(
+      "building",
+      chatgpt ? "Building document from ChatGPT reply…" : "Building document…",
+    );
     setStatus("saving", "Saving to History…");
     const saved = await saveGeneratedHistory({
       userId: input.userId,
@@ -64,6 +79,7 @@ export async function runGenerateJob(
       provider: input.provider,
       model: input.model,
       requiresClearance: input.requiresClearance,
+      isRemote: input.isRemote,
     });
     if (!saved.ok) {
       throw Object.assign(new Error(saved.error), { code: "DUPLICATE" });
@@ -78,6 +94,8 @@ export async function runGenerateJob(
     kind: input.kind,
     historyId,
     requiresClearance: input.requiresClearance,
+    isRemote: input.isRemote,
     clearanceWarning: input.clearanceWarning,
+    remoteWarning: input.remoteWarning,
   } as GenerateJobResult;
 }

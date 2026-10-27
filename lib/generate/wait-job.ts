@@ -51,8 +51,9 @@ export async function waitForGenerateJob(
 }
 
 export function formatGenerateStatus(job: GenerateJobPublic) {
-  if (job.status === "queued" && job.queuePosition) {
-    return `Queued (#${job.queuePosition}) — waiting for one of your free slots…`;
+  const base = job.message || GENERATE_STATUS_LABEL[job.status];
+  if (job.status === "queued" && job.queuePosition && job.queuePosition > 1) {
+    return `${base} (#${job.queuePosition} in your queue)`;
   }
-  return job.message || GENERATE_STATUS_LABEL[job.status];
+  return base;
 }

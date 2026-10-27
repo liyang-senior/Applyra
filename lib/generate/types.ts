@@ -24,7 +24,9 @@ export type GenerateJobInput = {
   historyId: string | null;
   pastedResponse?: string;
   requiresClearance: boolean;
+  isRemote: boolean;
   clearanceWarning: string | null;
+  remoteWarning: string | null;
 };
 
 export type GenerateJobResult = {
@@ -40,7 +42,9 @@ export type GenerateJobResult = {
   kind: "resume" | "cover-letter";
   historyId: string | null;
   requiresClearance: boolean;
+  isRemote: boolean;
   clearanceWarning: string | null;
+  remoteWarning: string | null;
 };
 
 export type GenerateJobPublic = {

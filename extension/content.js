@@ -1,5 +1,5 @@
 (() => {
-  const SIDEBAR_VERSION = 8;
+  const SIDEBAR_VERSION = 14;
   if (globalThis.__applyraSidebarVersion === SIDEBAR_VERSION) return;
   globalThis.__applyraSidebarVersion = SIDEBAR_VERSION;
   globalThis.__applyraSidebar = true;
@@ -490,22 +490,13 @@
 
   function analyzeJobDescription(jd) {
     const text = String(jd || "");
-    const remotePatterns = [
-      /\bremote\b/i,
-      /\bwork[\s-]*from[\s-]*home\b/i,
-      /\bwfh\b/i,
-      /\btelework(?:ing)?\b/i,
-      /\btelecommut(?:e|ing)\b/i,
-      /\bfully[\s-]*remote\b/i,
-      /\b100%\s*remote\b/i,
-      /\bremote[\s-]*first\b/i,
-      /\bremote[\s-]*friendly\b/i,
-      /\bremote[\s-]*ok\b/i,
-      /\bremote[\s-]*optional\b/i,
-      /\bdistributed\s+team\b/i,
-      /\bwork\s+remotely\b/i,
-      /\banywhere\s+in\s+the\s+(?:us|u\.s\.|united\s+states)\b/i,
-      /\blocation:\s*remote\b/i,
+    const locationPatterns = [
+      /\bhybrid\b/i,
+      /\bonsite\b/i,
+      /\bon[\s-]*site\b/i,
+      /\bin[\s-]*office\b/i,
+      /\bin[\s-]*person\b/i,
+      /\bon[\s-]*prem(?:ises)?\b/i,
     ];
     const clearancePatterns = [
       /\bsecurity\s+clearance\b/i,
@@ -530,16 +521,17 @@
       }
       return found;
     }
-    const remoteMatches = collect(remotePatterns);
+    const locationMatches = collect(locationPatterns);
     const clearanceMatches = collect(clearancePatterns);
-    const isRemote = remoteMatches.length > 0;
+    const hasHybridOrOnsite = locationMatches.length > 0;
+    const isRemote = !hasHybridOrOnsite;
     const requiresClearance = clearanceMatches.length > 0;
     return {
       isRemote,
       requiresClearance,
-      remoteError: isRemote
-        ? null
-        : "JD does not mention remote / work-from-home. Generate and Applied are blocked.",
+      remoteWarning: hasHybridOrOnsite
+        ? `Warning: JD mentions hybrid / onsite (${locationMatches.join(", ")}). It will be flagged in History.`
+        : null,
       clearanceWarning: requiresClearance
         ? `Warning: JD may require clearance or public trust (${clearanceMatches.join(", ")}). It will be flagged in History.`
         : null,
@@ -557,9 +549,9 @@
     }
     const check = analyzeJobDescription(jobDescription);
     const parts = [];
-    if (!check.isRemote) {
+    if (check.remoteWarning) {
       parts.push(
-        `<div class="jd-alert" data-kind="remote">${escapeHtml(check.remoteError)}</div>`,
+        `<div class="jd-alert" data-kind="remote">${escapeHtml(check.remoteWarning)}</div>`,
       );
     }
     if (check.clearanceWarning) {
@@ -573,39 +565,27 @@
 
   function syncAppliedEnabled(host) {
     const { companyName, jobTitle, jobLink, jobDescription } = readFields(host);
-    const check = analyzeJobDescription(jobDescription);
     const button = host.shadowRoot.querySelector("[data-action='applied']");
     if (button) {
-      button.disabled = !(
-        companyName &&
-        jobTitle &&
-        jobLink &&
-        jobDescription &&
-        check.isRemote
-      );
+      button.disabled = !(companyName && jobTitle && jobLink && jobDescription);
     }
   }
 
   function syncGenerateEnabled(host) {
     const { provider, paste, companyName, jobTitle, jobLink, jobDescription } =
       readFields(host);
-    const check = analyzeJobDescription(jobDescription);
     const manual = provider === "chatgpt";
-    const remoteBlocked =
-      !companyName ||
-      !jobTitle ||
-      !jobLink ||
-      !jobDescription ||
-      !check.isRemote;
+    const missingRequired =
+      !companyName || !jobTitle || !jobLink || !jobDescription;
     host.shadowRoot
       .querySelectorAll("[data-action='copy-resume'], [data-action='copy-cover']")
       .forEach((button) => {
-        button.disabled = remoteBlocked;
+        button.disabled = missingRequired;
       });
     host.shadowRoot
       .querySelectorAll("[data-action='resume'], [data-action='cover']")
       .forEach((button) => {
-        button.disabled = remoteBlocked || (manual && !paste);
+        button.disabled = missingRequired || (manual && !paste);
       });
   }
 
@@ -634,10 +614,11 @@
 
   function formatJobStatus(job) {
     if (!job) return "Working…";
-    if (job.status === "queued" && job.queuePosition) {
-      return `Queued (#${job.queuePosition}) — waiting for one of your free slots…`;
+    const base = job.message || job.status || "Working…";
+    if (job.status === "queued" && job.queuePosition && job.queuePosition > 1) {
+      return `${base} (#${job.queuePosition} in your queue)`;
     }
-    return job.message || job.status || "Working…";
+    return base;
   }
 
   async function waitForJob(host, jobId) {
@@ -757,11 +738,8 @@
       return;
     }
     const check = analyzeJobDescription(fields.jobDescription);
-    if (!check.isRemote) {
-      setMsg(host, check.remoteError, true);
-      return;
-    }
-    if (check.clearanceWarning) setMsg(host, check.clearanceWarning, true);
+    if (check.remoteWarning) setMsg(host, check.remoteWarning, true);
+    else if (check.clearanceWarning) setMsg(host, check.clearanceWarning, true);
     else setMsg(host, "Saving…");
     try {
       const response = await api("/api/applications", {
@@ -831,12 +809,9 @@
       return;
     }
     const check = analyzeJobDescription(fields.jobDescription);
-    if (!check.isRemote) {
-      setMsg(host, check.remoteError, true);
-      return;
-    }
-    if (check.clearanceWarning) setMsg(host, check.clearanceWarning, true);
-    else setMsg(host, "Received…");
+    if (check.remoteWarning) setMsg(host, check.remoteWarning, true);
+    else if (check.clearanceWarning) setMsg(host, check.clearanceWarning, true);
+    else setMsg(host, "Preparing ChatGPT prompt…");
     try {
       const response = await api("/api/generate", {
         method: "POST",
@@ -857,11 +832,24 @@
         setMsg(host, data.error || "Could not build prompt.", true);
         return;
       }
-      if (!data.jobId) {
-        setMsg(host, "Could not queue prompt job.", true);
+      // Fast path: prompt returned inline (no queue).
+      if (data.result?.mode === "prompt" && data.result.prompt) {
+        if (data.result.historyId) historyId = data.result.historyId;
+        await navigator.clipboard.writeText(data.result.prompt);
+        setMsg(
+          host,
+          "Prompt copied. Paste into ChatGPT, then paste the reply below.",
+        );
         return;
       }
-      setMsg(host, formatJobStatus(data.job));
+      if (!data.jobId) {
+        setMsg(host, "Could not build prompt.", true);
+        return;
+      }
+      setMsg(
+        host,
+        formatJobStatus(data.job) || "Preparing ChatGPT prompt…",
+      );
       const result = await waitForJob(host, data.jobId);
       if (result.historyId) historyId = result.historyId;
       if (result.prompt) {
@@ -902,16 +890,21 @@
       return;
     }
     const check = analyzeJobDescription(fields.jobDescription);
-    if (!check.isRemote) {
-      setMsg(host, check.remoteError, true);
-      return;
-    }
     if (fields.provider === "chatgpt" && !fields.paste) {
       setMsg(host, "Paste the ChatGPT reply first.", true);
       return;
     }
-    if (check.clearanceWarning) setMsg(host, check.clearanceWarning, true);
-    else setMsg(host, "Received…");
+    const manualChatgpt = fields.provider === "chatgpt";
+    if (check.remoteWarning) setMsg(host, check.remoteWarning, true);
+    else if (check.clearanceWarning) setMsg(host, check.clearanceWarning, true);
+    else {
+      setMsg(
+        host,
+        manualChatgpt
+          ? "Building from ChatGPT reply…"
+          : "Received…",
+      );
+    }
     try {
       const response = await api("/api/generate", {
         method: "POST",
@@ -940,7 +933,13 @@
         setMsg(host, "Could not queue generation.", true);
         return;
       }
-      setMsg(host, formatJobStatus(data.job));
+      setMsg(
+        host,
+        formatJobStatus(data.job) ||
+          (manualChatgpt
+            ? "Building from ChatGPT reply…"
+            : "Queued…"),
+      );
       const result = await waitForJob(host, data.jobId);
       if (result.historyId) historyId = result.historyId;
       if (result.mode === "prompt" && result.prompt) {

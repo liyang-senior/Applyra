@@ -1,32 +1,46 @@
 {
+  "ssn": "5345",
+  "zip": "19701",
   "name": "Elvis Edinge",
-  "title": "Senior DevOps / SRE Engineer",
   "email": "elviseedinge@gmail.com",
   "phone": "+1 (945) 206-0255",
-  "location": "Bear, DE",
-  "zip": "19701",
-  "linkedin": "https://linkedin.com/in/elvisedinge",
-  "website": "",
-  "github": "",
+  "title": "Senior DevOps / SRE Engineer",
   "cvLink": "https://flowcv.com/resume/45koh0slbnmj",
-  "base_skills": [
-    "Cloud & Platform Engineering: Amazon Web Services (AWS), Cloud-Based Technologies, Infrastructure as a Service (IaaS), Production Infrastructure, Non-Production Environments, High-Availability Cloud Platforms, Infrastructure Scalability, Capacity Planning",
-    "DevOps & Continuous Delivery: Jenkins, Bitbucket, GitHub, Maven, Nexus, Subversion, Continuous Integration (CI), Continuous Delivery (CD), Automated Build Pipelines, Application Deployment, Release Management, Production Elevation",
-    "Infrastructure Automation & Configuration: Terraform, Ansible, Ansible Playbooks, Infrastructure as Code (IaC), Configuration Management, Software Automation, Infrastructure Orchestration, Automation Scripting, API Integrations, Provisioning",
-    "Containers, Operating Systems & Web Servers: Docker, Containerization, Linux, Unix, Red Hat Enterprise Linux (RHEL), Linux Administration, Package Management, Third-Party Repositories, Apache, Apache Tomcat",
-    "Site Reliability Engineering & Observability: Site Reliability Engineering (SRE), Prometheus, Grafana, SolarWinds, Infrastructure Monitoring, Application Health Monitoring, Incident Troubleshooting, Post-Mortem Analysis, Service Level Agreements (SLAs), Service Level Objectives (SLOs), Performance Optimization, 24x7 Production Support",
-    "Middleware, Data & Enterprise Systems: Redis, Redis Replication, Failover, Redundancy, ActiveMQ, Message Queuing, Sybase, Mainframe Integrations, Database Operations, IBM FileNet, BMC Control-M, Workload Scheduling",
-    "IT Operations & Service Management: ServiceNow, Jira, Change Management, Asset Management, Configuration Management, IP Management, Issue Tracking, Project Coordination, On-Call Support, Application Support",
-    "Security & DevSecOps: Cybersecurity, DevSecOps, Security Vulnerability Monitoring, Penetration Testing, Asset and Malware Management, Log Management, Cybersecurity Policies, Security Standards, Architecture Security Reviews, Access and Password Policy Validation",
-    "Engineering & Collaboration: Cross-Functional Collaboration, Systems Troubleshooting, Root Cause Analysis, Technical Recommendations, Enterprise System Design, Application Integration, Incident Management, Software Lifecycle Improvements"
+  "gender": "male",
+  "github": "",
+  "street": "112 Bell Ct",
+  "website": "",
+  "birthday": "10/30/1985",
+  "linkedin": "https://linkedin.com/in/elvisedinge",
+  "location": "Bear, DE",
+  "education": [
+    {
+      "degree": "Master of Science - MS, Cybersecurity Technology",
+      "school": "University of Maryland Global Campus",
+      "end_year": "2022",
+      "start_year": "2021"
+    },
+    {
+      "degree": "Bachelor of Science - BS, Computer Science",
+      "school": "University of Maryland Global Campus",
+      "end_year": "2020",
+      "start_year": "2018"
+    },
+    {
+      "degree": "Associate of Science - AS, Computer and Information Sciences",
+      "school": "Delaware Technical Community College",
+      "end_year": "2015",
+      "start_year": "2013"
+    }
   ],
+  "techStack": "DevOps",
   "experience": [
     {
-      "company": "JPMorganChase",
       "title": "Senior Site Reliability Engineer",
-      "start_date": "12/2023",
+      "company": "JPMorganChase",
       "end_date": "10/2026",
       "location": "",
+      "start_date": "12/2023",
       "base_bullets": [
         "Developed and deployed software automation to improve operational efficiency and reliability across supported application environments.",
         "Led production incident troubleshooting and contributed technical findings to post-mortem analyses to strengthen system stability.",
@@ -36,11 +50,11 @@
       ]
     },
     {
-      "company": "Capital One",
       "title": "Sr. DevOps/SRE Consultant",
-      "start_date": "09/2021",
+      "company": "Capital One",
       "end_date": "11/2023",
       "location": "",
+      "start_date": "09/2021",
       "base_bullets": [
         "Developed fully automated pipelines to build, test, and deploy applications across multiple environments.",
         "Designed, built, and implemented enterprise-class security systems for production infrastructure, information systems, networks, and data resilience.",
@@ -53,11 +67,11 @@
       ]
     },
     {
-      "company": "Comcast",
       "title": "Engineering Ops Lead",
-      "start_date": "04/2019",
+      "company": "Comcast",
       "end_date": "09/2021",
       "location": "",
+      "start_date": "04/2019",
       "base_bullets": [
         "Led the change management lifecycle, developing strategies and implementation plans to support adoption of infrastructure changes.",
         "Built and operated Infrastructure as Code and automation workflows using Ansible, Docker, GitHub, Terraform, and Jenkins CI/CD.",
@@ -70,11 +84,11 @@
       ]
     },
     {
-      "company": "TEKsystems",
       "title": "DevOps Engineer",
-      "start_date": "05/2018",
+      "company": "TEKsystems",
       "end_date": "03/2019",
       "location": "",
+      "start_date": "05/2018",
       "base_bullets": [
         "Used SolarWinds to monitor security vulnerabilities and application health across supported environments.",
         "Configured Redis multi-node environments with Ansible playbooks, including replication, failover, and redundancy.",
@@ -86,11 +100,11 @@
       ]
     },
     {
-      "company": "Vanguard",
       "title": "DevOps Engineer",
-      "start_date": "07/2015",
+      "company": "Vanguard",
       "end_date": "05/2018",
       "location": "",
+      "start_date": "07/2015",
       "base_bullets": [
         "Supported application packaging and deployment pipelines for continuous integration and continuous delivery.",
         "Coordinated with change management to provision connection strings and application IDs in a vault for mainframe, Sybase, and database integrations during production elevation.",
@@ -106,27 +120,15 @@
       ]
     }
   ],
-  "education": [
-    {
-      "degree": "Master of Science - MS, Cybersecurity Technology",
-      "school": "University of Maryland Global Campus",
-      "start_year": "2021",
-      "end_year": "2022"
-    },
-    {
-      "degree": "Bachelor of Science - BS, Computer Science",
-      "school": "University of Maryland Global Campus",
-      "start_year": "2018",
-      "end_year": "2020"
-    },
-    {
-      "degree": "Associate of Science - AS, Computer and Information Sciences",
-      "school": "Delaware Technical Community College",
-      "start_year": "2013",
-      "end_year": "2015"
-    }
-  ],
-  "street": "112 Bell Ct",
-  "birthday": "10/30/1985",
-  "ssn": "5345"
+  "base_skills": [
+    "Cloud & Platform Engineering: Amazon Web Services (AWS), Cloud-Based Technologies, Infrastructure as a Service (IaaS), Production Infrastructure, Non-Production Environments, High-Availability Cloud Platforms, Infrastructure Scalability, Capacity Planning",
+    "DevOps & Continuous Delivery: Jenkins, Bitbucket, GitHub, Maven, Nexus, Subversion, Continuous Integration (CI), Continuous Delivery (CD), Automated Build Pipelines, Application Deployment, Release Management, Production Elevation",
+    "Infrastructure Automation & Configuration: Terraform, Ansible, Ansible Playbooks, Infrastructure as Code (IaC), Configuration Management, Software Automation, Infrastructure Orchestration, Automation Scripting, API Integrations, Provisioning",
+    "Containers, Operating Systems & Web Servers: Docker, Containerization, Linux, Unix, Red Hat Enterprise Linux (RHEL), Linux Administration, Package Management, Third-Party Repositories, Apache, Apache Tomcat",
+    "Site Reliability Engineering & Observability: Site Reliability Engineering (SRE), Prometheus, Grafana, SolarWinds, Infrastructure Monitoring, Application Health Monitoring, Incident Troubleshooting, Post-Mortem Analysis, Service Level Agreements (SLAs), Service Level Objectives (SLOs), Performance Optimization, 24x7 Production Support",
+    "Middleware, Data & Enterprise Systems: Redis, Redis Replication, Failover, Redundancy, ActiveMQ, Message Queuing, Sybase, Mainframe Integrations, Database Operations, IBM FileNet, BMC Control-M, Workload Scheduling",
+    "IT Operations & Service Management: ServiceNow, Jira, Change Management, Asset Management, Configuration Management, IP Management, Issue Tracking, Project Coordination, On-Call Support, Application Support",
+    "Security & DevSecOps: Cybersecurity, DevSecOps, Security Vulnerability Monitoring, Penetration Testing, Asset and Malware Management, Log Management, Cybersecurity Policies, Security Standards, Architecture Security Reviews, Access and Password Policy Validation",
+    "Engineering & Collaboration: Cross-Functional Collaboration, Systems Troubleshooting, Root Cause Analysis, Technical Recommendations, Enterprise System Design, Application Integration, Incident Management, Software Lifecycle Improvements"
+  ]
 }
