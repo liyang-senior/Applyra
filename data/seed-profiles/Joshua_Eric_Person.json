@@ -1,0 +1,126 @@
+{
+  "name": "Joshua Eric Person",
+  "title": "Cloud & DevOps Engineer",
+  "email": "joshuaopokubamfo@gmail.com",
+  "phone": "+1 4632276949",
+  "location": "Indianapolis, IN",
+  "zip": "46227",
+  "linkedin": "https://linkedin.com/in/joshua-person-4751655a",
+  "website": "",
+  "github": "",
+  "cvLink": "https://flowcv.com/resume/gm5gsiwfjn7i",
+  "base_skills": [
+    "Cloud Engineering: Amazon Web Services (AWS), Amazon EC2, Amazon S3, Cloud Infrastructure, Infrastructure as Code (IaC), Cloud Environment Assessment, Cloud Support, Salesforce Hyperforce",
+    "Infrastructure & Automation: Terraform, AWS CloudFormation, Terraform Modules, Bash Scripting, Cloud Provisioning, Infrastructure Configuration, Automation, Git-Based Infrastructure Changes",
+    "Cloud Operations & Troubleshooting: Cloud Networking, DNS, IAM, Environment Validation, Infrastructure Troubleshooting, Production Incident Triage, Root-Cause Analysis, Technical Escalation",
+    "Enterprise Platforms & Applications: Salesforce Service Cloud, Salesforce Developer Console, Salesforce Workbench, Salesforce Setup, Microsoft 365, Windows Server, Hospital Information Systems (HIS), Electronic Medical Records (EMR)",
+    "Support & Service Management: ServiceNow, Jira Service Management, Incident Management, Change Management, Customer Escalation, Production Support, Issue Reproduction, Knowledge Transfer, Technical Documentation",
+    "Application & Systems Support: Linux, Application Log Analysis, Cloud Monitoring, Software Configuration, Middleware Integration, Customer Support, System Administration, Hardware Troubleshooting",
+    "Data & Reporting: SQL, Cognos Report Studio, Aqua Data, Reporting, Data Validation, Issue Analysis, Operational Documentation",
+    "Professional Practices: Cross-Functional Collaboration, Customer Communication, Technical Problem Solving, User Support, Stakeholder Coordination, Requirements Clarification"
+  ],
+  "experience": [
+    {
+      "company": "Salesforce",
+      "title": "Cloud Engineer, Technical Support",
+      "start_date": "12/2023",
+      "end_date": "10/2026",
+      "location": "Indianapolis, IN",
+      "base_bullets": [
+        "Supported production customer escalations for Salesforce Service Cloud, investigating reported behavior, reproducing issues, and coordinating with engineering teams to move complex cases toward resolution.",
+        "Reviewed customer organization settings and platform configuration using Salesforce Setup, Developer Console, and Workbench to narrow down application and environment issues.",
+        "Analyzed application logs and platform behavior, documenting reproduction steps and technical findings for engineering review and customer follow-up.",
+        "Collaborated with cloud and platform specialists on infrastructure-related investigations involving Salesforce Hyperforce and AWS-based services.",
+        "Investigated connectivity, access, and configuration concerns while distinguishing customer-specific settings from broader platform behavior.",
+        "Coordinated escalations involving production reliability and service functionality, sharing clear evidence and progress updates with support and engineering stakeholders.",
+        "Maintained troubleshooting documentation, known-issue notes, and resolution steps to support knowledge sharing and more consistent customer support.",
+        "Worked across support and engineering teams to validate fixes, communicate outcomes, and improve handling of recurring technical issues."
+      ]
+    },
+    {
+      "company": "Nexus Technologies Group, LLC",
+      "title": "Cloud Consultant — Contract",
+      "start_date": "05/2022",
+      "end_date": "12/2023",
+      "location": "Indianapolis, IN",
+      "base_bullets": [
+        "Supported AWS cloud infrastructure consulting engagements, reviewing existing environments and helping plan cloud configuration and infrastructure improvements.",
+        "Developed and maintained infrastructure definitions with Terraform and AWS CloudFormation, using version-controlled changes to keep deployments repeatable.",
+        "Assessed IAM permissions, networking configurations, compute resources, and storage services to identify environment gaps and inform cloud recommendations.",
+        "Created and extended reusable Terraform modules for AWS infrastructure, including VPC, IAM, EC2, and S3 resources.",
+        "Used Bash scripting to automate routine setup and administration tasks, helping reduce manual work during cloud provisioning and environment maintenance.",
+        "Reviewed AWS Cost Explorer data to identify spending patterns and document potential cost optimization opportunities.",
+        "Collaborated with cloud engineers on infrastructure troubleshooting, configuration validation, and cloud migration planning.",
+        "Documented cloud environment assessments, implementation procedures, and technical handoffs for clients and internal engineering teams."
+      ]
+    },
+    {
+      "company": "Indiana University Health",
+      "title": "Systems Analyst Intermediate",
+      "start_date": "12/2020",
+      "end_date": "12/2023",
+      "location": "Indianapolis, IN",
+      "base_bullets": [
+        "Resolved clinical, business, and end-user issues through the ServiceNow support queue, supporting hospital staff with application, Windows Server, and Microsoft 365 problems.",
+        "Performed initial triage of system incidents, checking DNS, network connectivity, workstation behavior, and available monitoring information before escalating complex issues.",
+        "Supported troubleshooting of AWS-hosted business workloads, including EC2 and S3 services used by scheduling and reporting applications.",
+        "Worked with senior systems analysts, application owners, and infrastructure specialists when production incidents required additional access or deeper investigation.",
+        "Followed healthcare change-management processes, including approval requirements and implementation windows, when supporting production changes.",
+        "Maintained detailed incident and change records to help technical teams understand investigation steps, work performed, and follow-up actions.",
+        "Improved change-planning practices by accounting for downstream application schedules and operational dependencies after identifying a workload conflict."
+      ]
+    },
+    {
+      "company": "Genesys",
+      "title": "Sr. Cloud Engineer",
+      "start_date": "08/2020",
+      "end_date": "12/2020",
+      "location": "Indianapolis, IN",
+      "base_bullets": [
+        "Supported AWS cloud engineering and infrastructure operations, including EC2 resources, networking, and environment configuration.",
+        "Used Bash scripting to assist with repeatable cloud administration and operational support activities.",
+        "Investigated infrastructure issues by reviewing system behavior, validating settings, and coordinating remediation with engineering colleagues.",
+        "Followed established processes for infrastructure changes and documented troubleshooting steps to support continuity across environments.",
+        "Collaborated with cloud engineering teams on service availability, configuration verification, and production support tasks."
+      ]
+    },
+    {
+      "company": "Brock Solutions",
+      "title": "Software Support Engineer",
+      "start_date": "03/2019",
+      "end_date": "08/2020",
+      "location": "Irving, TX",
+      "base_bullets": [
+        "Managed Jira Service Management tickets for airport customers using baggage-handling and real-time automation software across Linux and Windows Server environments.",
+        "Investigated reported application issues by reviewing logs, reproducing customer scenarios, and collecting technical evidence for product engineering escalation.",
+        "Supported incidents involving baggage sorters and conveyor systems when observed behavior differed from airport operational requirements.",
+        "Communicated incident status and troubleshooting findings with airport operations teams while coordinating next steps with engineering.",
+        "Participated in after-hours incident bridge calls and remained engaged until service restoration or a clear technical handoff.",
+        "Improved troubleshooting accuracy by checking production application versions and patch levels after identifying a staging-to-production mismatch."
+      ]
+    }
+  ],
+  "education": [
+    {
+      "degree": "Cloud Certification (Hands-on AWS SysOps Boot Camp)",
+      "school": "Indiana Wesleyan University",
+      "start_year": "2022",
+      "end_year": "2022"
+    },
+    {
+      "degree": "Bachelor of Science (Business Information Systems)",
+      "school": "Indiana Wesleyan University",
+      "start_year": "2017",
+      "end_year": "2020"
+    },
+    {
+      "degree": "Information Technology",
+      "school": "University of Indianapolis",
+      "start_year": "2007",
+      "end_year": "2012"
+    }
+  ],
+  "street": "1614 Stop 11 Rd, Apt 2",
+  "birthday": "3/14/1988",
+  "ssn": "9118"
+}

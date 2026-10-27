@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Applyra</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <header>
+      <img src="icons/32.png" width="24" height="24" alt="" />
+      <span>Applyra</span>
+    </header>
+
+    <nav class="tabs" aria-label="Account">
+      <button id="tab-signin" type="button" class="tab" aria-selected="true">
+        Sign in
+      </button>
+      <button id="tab-signup" type="button" class="tab" aria-selected="false">
+        Sign up
+      </button>
+    </nav>
+
+    <p id="session" hidden></p>
+    <div id="toast" class="toast" hidden role="status"></div>
+
+    <section id="page-signin" class="page">
+      <form id="signin-form">
+        <label for="signin-email">Email address</label>
+        <input
+          id="signin-email"
+          name="email"
+          type="email"
+          autocomplete="username"
+          autocapitalize="none"
+          spellcheck="false"
+          maxlength="254"
+          placeholder="you@example.com"
+          required
+        />
+
+        <label for="signin-password">Password</label>
+        <div class="field">
+          <input
+            id="signin-password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            minlength="8"
+            maxlength="128"
+            required
+          />
+          <button
+            class="eye"
+            type="button"
+            data-target="signin-password"
+            aria-label="Show password"
+            aria-pressed="false"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <g class="open">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </g>
+              <g class="shut">
+                <path d="M3 3l18 18" />
+                <path d="M10.6 10.6a3 3 0 004.2 4.2" />
+                <path d="M9.9 5.2A10.7 10.7 0 0112 5c6.5 0 10 7 10 7a18.4 18.4 0 01-3.2 4.4" />
+                <path d="M6.1 6.7C3.5 8.6 2 12 2 12s3.5 7 10 7c1.5 0 2.9-.3 4.1-.9" />
+              </g>
+            </svg>
+          </button>
+        </div>
+
+        <label class="remember">
+          <input id="remember" type="checkbox" />
+          Save email and password
+        </label>
+
+        <button id="signin" class="primary full" type="submit">Sign in</button>
+      </form>
+      <p id="signin-switch" class="switch">
+        No account?
+        <button id="goto-signup" type="button" class="linkish">Sign up</button>
+      </p>
+    </section>
+
+    <section id="page-signup" class="page" hidden>
+      <form id="signup-form">
+        <label for="signup-name">Name</label>
+        <input
+          id="signup-name"
+          name="name"
+          type="text"
+          autocomplete="name"
+          maxlength="80"
+          placeholder="Your name"
+          required
+        />
+
+        <label for="signup-email">Email address</label>
+        <input
+          id="signup-email"
+          name="email"
+          type="email"
+          autocomplete="username"
+          autocapitalize="none"
+          spellcheck="false"
+          maxlength="254"
+          placeholder="you@example.com"
+          required
+        />
+
+        <label for="signup-password">Password</label>
+        <div class="field">
+          <input
+            id="signup-password"
+            name="password"
+            type="password"
+            autocomplete="new-password"
+            minlength="8"
+            maxlength="128"
+            required
+          />
+          <button
+            class="eye"
+            type="button"
+            data-target="signup-password"
+            aria-label="Show password"
+            aria-pressed="false"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <g class="open">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </g>
+              <g class="shut">
+                <path d="M3 3l18 18" />
+                <path d="M10.6 10.6a3 3 0 004.2 4.2" />
+                <path d="M9.9 5.2A10.7 10.7 0 0112 5c6.5 0 10 7 10 7a18.4 18.4 0 01-3.2 4.4" />
+                <path d="M6.1 6.7C3.5 8.6 2 12 2 12s3.5 7 10 7c1.5 0 2.9-.3 4.1-.9" />
+              </g>
+            </svg>
+          </button>
+        </div>
+        <p class="hint">At least 8 characters.</p>
+
+        <label for="signup-confirm">Confirm password</label>
+        <div class="field">
+          <input
+            id="signup-confirm"
+            name="confirm"
+            type="password"
+            autocomplete="new-password"
+            maxlength="128"
+            required
+          />
+          <button
+            class="eye"
+            type="button"
+            data-target="signup-confirm"
+            aria-label="Show confirm password"
+            aria-pressed="false"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <g class="open">
+                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                <circle cx="12" cy="12" r="3" />
+              </g>
+              <g class="shut">
+                <path d="M3 3l18 18" />
+                <path d="M10.6 10.6a3 3 0 004.2 4.2" />
+                <path d="M9.9 5.2A10.7 10.7 0 0112 5c6.5 0 10 7 10 7a18.4 18.4 0 01-3.2 4.4" />
+                <path d="M6.1 6.7C3.5 8.6 2 12 2 12s3.5 7 10 7c1.5 0 2.9-.3 4.1-.9" />
+              </g>
+            </svg>
+          </button>
+        </div>
+
+        <button id="signup" class="primary full" type="submit">Sign up</button>
+      </form>
+      <p class="switch">
+        Already have an account?
+        <button id="goto-signin" type="button" class="linkish">Sign in</button>
+      </p>
+    </section>
+
+    <button id="arrow" class="sidebar" type="button" aria-pressed="true" hidden>
+      Hide page arrow
+    </button>
+
+    <div class="links">
+      <button id="dashboard" type="button">Dashboard</button>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

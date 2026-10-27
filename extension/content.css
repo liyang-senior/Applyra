@@ -1,0 +1,14 @@
+#applyra-sidebar {
+  all: initial;
+  position: fixed !important;
+  inset: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  overflow: visible !important;
+  pointer-events: none !important;
+  z-index: 2147483646 !important;
+}
+
+#applyra-sidebar[hidden] {
+  display: none !important;
+}

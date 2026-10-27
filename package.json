@@ -1,0 +1,32 @@
+{
+  "name": "applyra",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "@react-pdf/renderer": "^3.4.4",
+    "bcryptjs": "^2.4.3",
+    "docx": "^9.0.0",
+    "jsonc-parser": "^3.3.1",
+    "next": "^15.5.4",
+    "openai": "^4.20.0",
+    "pg": "^8.23.1",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.14",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^20.19.11",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.1.13",
+    "@types/react-dom": "^19.1.9",
+    "tailwindcss": "^4.1.14",
+    "typescript": "^5.9.2"
+  }
+}

@@ -1,0 +1,12 @@
+/node_modules
+/.next/
+/out/
+/build
+/Origin
+/vendor/Origin
+.DS_Store
+*.pem
+npm-debug.log*
+.env*.local
+/data/users.json
+*.tsbuildinfo
