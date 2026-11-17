@@ -196,7 +196,7 @@ export function EmailTemplatesPanel({
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)]">
+      <div className="data-shell">
         {sorted.length === 0 ? (
           <p className="px-4 py-8 text-center text-[var(--muted)]">
             No email templates yet.
@@ -271,7 +271,7 @@ export function EmailTemplatesPanel({
           onClick={() => closeDialog()}
         >
           <div
-            className="flex max-h-[min(90vh,720px)] w-full max-w-xl flex-col rounded-2xl border border-[var(--line)] bg-[var(--card)] shadow-xl"
+            className="soft-card flex max-h-[min(90vh,720px)] w-full max-w-xl flex-col shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="border-b border-[var(--line)] px-5 py-4">

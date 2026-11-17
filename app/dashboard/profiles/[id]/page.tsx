@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { DashboardShell } from "@/components/DashboardShell";
+import { PageHeading } from "@/components/PageHeading";
 import { ResumeProfileForm } from "@/components/ResumeProfileForm";
 import { getCurrentAccount } from "@/lib/server/auth";
 import {
@@ -34,16 +35,11 @@ export default async function EditProfilePage({ params }: Params) {
 
   return (
     <DashboardShell user={user} active="profiles">
-      <div className="mb-6">
-        <h1 className="font-[family-name:var(--font-fraunces)] text-3xl tracking-tight sm:text-4xl">
-          {canManage ? "Edit profile" : "Profile detail"}
-        </h1>
-        <p className="mt-2 text-sm text-[var(--muted)] sm:text-base">
-          {canManage
-            ? "Click a field name (Name, LinkedIn, …) to copy its value."
-            : "Read-only view of your assigned résumé profile. Click a field name to copy."}
-        </p>
-      </div>
+      <PageHeading title={canManage ? "Edit profile" : "Profile detail"}>
+        {canManage
+          ? "Click a field name (Name, LinkedIn, …) to copy its value."
+          : "Read-only view of your assigned résumé profile. Click a field name to copy."}
+      </PageHeading>
       <ResumeProfileForm
         mode="edit"
         profileId={profile.id}

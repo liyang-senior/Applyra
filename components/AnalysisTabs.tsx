@@ -23,7 +23,7 @@ export function AnalysisTabs({
   return (
     <div className="w-full space-y-5">
       <div
-        className="inline-flex rounded-2xl border border-[var(--line)] bg-[var(--card)] p-1"
+        className="soft-card inline-flex p-1"
         role="tablist"
         aria-label="Analysis views"
       >

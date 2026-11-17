@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/DashboardShell";
+import { PageHeading } from "@/components/PageHeading";
 import { HistoryPanel } from "@/components/HistoryPanel";
 import { getCurrentAccount } from "@/lib/server/auth";
 import { listHistoryFor } from "@/lib/history";
@@ -25,16 +26,11 @@ export default async function HistoryPage() {
 
   return (
     <DashboardShell user={user} active="history">
-      <div className="mb-6">
-        <h1 className="font-[family-name:var(--font-fraunces)] text-3xl tracking-tight sm:text-4xl">
-          History
-        </h1>
-        <p className="mt-2 text-sm text-[var(--muted)] sm:text-base">
-          {canFilterUsers
-            ? "Review generated résumés and Applied jobs. Filter by user to inspect their timeline."
-            : "Your generated résumés and Applied jobs."}
-        </p>
-      </div>
+      <PageHeading title="History">
+        {canFilterUsers
+          ? "Review generated résumés and Applied jobs. Filter by user to inspect their timeline."
+          : "Your generated résumés and Applied jobs."}
+      </PageHeading>
       <HistoryPanel
         initialRecords={records}
         users={users}

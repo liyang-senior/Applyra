@@ -257,7 +257,7 @@ export function HistoryPanel({
   return (
     <div className="w-full space-y-4">
       {toastHost}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="soft-card grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {canFilterUsers ? (
           <label className="block text-sm">
             <span className="mb-1 block font-medium">User</span>
@@ -395,9 +395,9 @@ export function HistoryPanel({
       ) : null}
 
       <div className="-mx-3 overflow-x-auto px-3 sm:mx-0 sm:px-0">
-        <div className="min-w-[44rem] overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)] sm:min-w-0">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-[var(--line)] text-[var(--muted)]">
+        <div className="data-shell min-w-[44rem] sm:min-w-0">
+          <table className="data-table">
+            <thead>
               <tr>
                 <th className="w-10 px-3 py-3 sm:px-4">
                   <input
@@ -431,7 +431,7 @@ export function HistoryPanel({
                 pageRows.map((record) => (
                   <tr
                     key={record.id}
-                    className="border-t border-[var(--line)] align-top"
+                    className="align-top"
                   >
                     <td className="px-3 py-3 sm:px-4">
                       <input
@@ -588,7 +588,7 @@ export function HistoryPanel({
           onClick={() => setJdRecord(null)}
         >
           <div
-            className="flex max-h-[min(85vh,720px)] w-full max-w-2xl flex-col rounded-2xl border border-[var(--line)] bg-[var(--card)] shadow-xl"
+            className="soft-card flex max-h-[min(85vh,720px)] w-full max-w-2xl flex-col shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="border-b border-[var(--line)] px-5 py-4">
@@ -643,7 +643,7 @@ export function HistoryPanel({
           onClick={() => !bulkPending && setRejectOpen(false)}
         >
           <div
-            className="w-full max-w-lg rounded-2xl border border-[var(--line)] bg-[var(--card)] shadow-xl"
+            className="soft-card w-full max-w-lg shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="border-b border-[var(--line)] px-5 py-4">

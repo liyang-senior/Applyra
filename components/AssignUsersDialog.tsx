@@ -76,7 +76,7 @@ export function AssignUsersDialog({
       onClick={onClose}
     >
       <div
-        className="flex max-h-[min(85vh,720px)] w-full max-w-lg flex-col rounded-2xl border border-[var(--line)] bg-[var(--card)] shadow-xl"
+        className="soft-card flex max-h-[min(85vh,720px)] w-full max-w-lg flex-col shadow-xl"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="border-b border-[var(--line)] px-5 py-4">

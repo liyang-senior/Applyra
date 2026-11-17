@@ -267,7 +267,7 @@ export function ResumeProfilesTable({
       ) : null}
       <div
         className={[
-          "mb-4 grid gap-3",
+          "soft-card mb-4 grid gap-3 p-4",
           canManage
             ? "sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6"
             : "sm:grid-cols-2 lg:grid-cols-4",
@@ -373,9 +373,9 @@ export function ResumeProfilesTable({
       </div>
 
       <div className="-mx-3 overflow-x-auto px-3 sm:mx-0 sm:px-0">
-        <div className="min-w-[40rem] overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)] sm:min-w-0">
-          <table className="w-full min-w-full text-left text-sm">
-            <thead className="border-b border-[var(--line)] text-[var(--muted)]">
+        <div className="data-shell min-w-[40rem] sm:min-w-0">
+          <table className="data-table">
+            <thead>
               <tr>
                 {canManage ? (
                   <th className="w-10 px-3 py-3 sm:px-4">
@@ -426,10 +426,18 @@ export function ResumeProfilesTable({
                   </td>
                 </tr>
               ) : (
-                pageRows.map((profile) => (
+                pageRows.map((profile, index) => {
+                  const mark = [
+                    "bg-[#e3f3ea] text-[#0c693b]",
+                    "bg-[#f8ecd4] text-[#8a5a12]",
+                    "bg-[#e3f1f5] text-[#1f5f73]",
+                    "bg-[#f3e8f4] text-[#6b3f72]",
+                    "bg-[#f8e8e4] text-[#9d3428]",
+                  ][index % 5];
+                  return (
                   <tr
                     key={profile.id}
-                    className="border-t border-[var(--line)] align-top"
+                    className="align-top"
                   >
                     {canManage ? (
                       <td className="px-3 py-3 sm:px-4">
@@ -443,9 +451,18 @@ export function ResumeProfilesTable({
                       </td>
                     ) : null}
                     <td className="px-3 py-3 sm:px-4">
-                      <div className="font-medium">{profile.name}</div>
-                      <div className="text-xs text-[var(--muted)]">
-                        {profile.email}
+                      <div className="flex items-center gap-2.5">
+                        <span
+                          className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${mark}`}
+                        >
+                          {(profile.name || "•").trim().charAt(0).toUpperCase()}
+                        </span>
+                        <div>
+                          <div className="font-medium">{profile.name}</div>
+                          <div className="text-xs text-[var(--muted)]">
+                            {profile.email}
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td className="px-3 py-3 sm:px-4">
@@ -513,7 +530,8 @@ export function ResumeProfilesTable({
                       </div>
                     </td>
                   </tr>
-                ))
+                  );
+                })
               )}
             </tbody>
           </table>

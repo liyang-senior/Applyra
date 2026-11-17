@@ -120,8 +120,7 @@ export function ResumeProfileForm({
         }
         const result = (await response.json()) as { profile: { id: string } };
         showToast("Profile created.", "ok");
-        router.push(`/dashboard/profiles/${result.profile.id}`);
-        router.refresh();
+        router.replace("/dashboard/profiles");
         return;
       }
 
@@ -191,7 +190,7 @@ export function ResumeProfileForm({
       {toastHost}
       <form onSubmit={save} className="space-y-8">
         {!readOnly ? (
-          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
+          <div className="flex flex-wrap items-center gap-2 soft-card p-4">
             <input
               ref={fileInputRef}
               type="file"
@@ -404,7 +403,7 @@ export function ResumeProfileForm({
             data.experience.map((job, index) => (
               <div
                 key={index}
-                className="space-y-3 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4"
+                className="space-y-3 soft-card p-4"
               >
                 <div className="grid gap-3 sm:grid-cols-2">
                   <input
@@ -511,7 +510,7 @@ export function ResumeProfileForm({
           {data.education.map((edu, index) => (
             <div
               key={index}
-              className="grid gap-3 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4 sm:grid-cols-2"
+              className="grid gap-3 soft-card p-4 sm:grid-cols-2"
             >
               <input
                 className={fieldClass}

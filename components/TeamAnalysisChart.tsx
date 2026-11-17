@@ -15,14 +15,14 @@ export function TeamAnalysisChart({
 
   if (rows.length === 0) {
     return (
-      <p className="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-6 text-[var(--muted)]">
+      <p className="soft-card p-6 text-[var(--muted)]">
         No users found.
       </p>
     );
   }
 
   return (
-    <div className="space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
+    <div className="space-y-4 soft-card p-4">
       <div className="flex flex-wrap gap-4 text-sm">
         <span className="inline-flex items-center gap-2">
           <span className="h-2.5 w-2.5 rounded-sm bg-[var(--green)]" />

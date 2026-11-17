@@ -5,6 +5,7 @@ import { useEffect } from "react";
 export type ToastKind = "ok" | "error";
 
 export type ToastState = {
+  id: number;
   text: string;
   kind: ToastKind;
 } | null;
@@ -28,39 +29,42 @@ export function Toast({
 
   return (
     <div
-      className="pointer-events-none fixed inset-x-0 top-5 z-[100] flex justify-center px-4"
+      className="pointer-events-none fixed top-5 right-5 z-[100] flex max-w-[min(22rem,calc(100vw-2.5rem))] justify-end"
       aria-live={ok ? "polite" : "assertive"}
       role={ok ? "status" : "alert"}
     >
       <div
+        key={toast.id}
         className={[
-          "pointer-events-auto flex max-w-md items-start gap-3 rounded-2xl border px-4 py-3 shadow-[0_18px_50px_rgba(48,36,20,0.16)] backdrop-blur-md",
-          "animate-[toast-in_280ms_cubic-bezier(0.22,1,0.36,1)]",
+          "toast-card pointer-events-auto relative w-max max-w-full overflow-hidden rounded-2xl border text-left shadow-[0_18px_40px_rgba(28,25,21,0.12)]",
           ok
-            ? "border-[var(--green)]/20 bg-[var(--card)]/95 text-[var(--green-deep)]"
-            : "border-[var(--danger)]/20 bg-[var(--card)]/95 text-[var(--danger)]",
+            ? "toast-card-ok border-[#b7dfc8] bg-[#e7f6ee] text-[#0c693b]"
+            : "toast-card-error border-[#f0c2ba] bg-[#fdecea] text-[#9d3428]",
         ].join(" ")}
       >
-        <span
-          className={[
-            "mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold text-white",
-            ok ? "bg-[var(--green)]" : "bg-[var(--danger)]",
-          ].join(" ")}
-          aria-hidden="true"
-        >
-          {ok ? "✓" : "!"}
-        </span>
-        <p className="min-w-0 flex-1 pt-0.5 text-sm leading-relaxed font-medium">
-          {toast.text}
-        </p>
-        <button
-          type="button"
-          className="ml-1 cursor-pointer rounded-lg px-1.5 py-0.5 text-lg leading-none text-[var(--muted)] hover:bg-black/5"
-          aria-label="Dismiss"
-          onClick={onClose}
-        >
-          ×
-        </button>
+        <div className="flex items-center gap-3 px-4 py-3.5">
+          <span
+            className={[
+              "grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm font-semibold text-white",
+              ok ? "bg-[#0e7a45]" : "bg-[#9d3428]",
+            ].join(" ")}
+            aria-hidden="true"
+          >
+            {ok ? "✓" : "!"}
+          </span>
+          <p className="min-w-0 text-left text-sm leading-relaxed font-medium">
+            {toast.text}
+          </p>
+          <button
+            type="button"
+            className="cursor-pointer rounded-lg px-1.5 py-0.5 text-lg leading-none opacity-70 transition hover:bg-black/5 hover:opacity-100"
+            aria-label="Dismiss"
+            onClick={onClose}
+          >
+            ×
+          </button>
+        </div>
+        <span className="toast-life" aria-hidden="true" />
       </div>
     </div>
   );

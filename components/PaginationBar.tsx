@@ -1,6 +1,6 @@
 "use client";
 
-const PAGE_SIZES = [10, 20, 50] as const;
+const DEFAULT_PAGE_SIZES = [10, 20, 50] as const;
 
 export function PaginationBar({
   page,
@@ -8,6 +8,7 @@ export function PaginationBar({
   total,
   onPageChange,
   onPageSizeChange,
+  pageSizes = DEFAULT_PAGE_SIZES,
   disabled = false,
 }: {
   page: number;
@@ -15,6 +16,7 @@ export function PaginationBar({
   total: number;
   onPageChange: (page: number) => void;
   onPageSizeChange: (size: number) => void;
+  pageSizes?: readonly number[];
   disabled?: boolean;
 }) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize) || 1);
@@ -31,12 +33,12 @@ export function PaginationBar({
         <label className="flex items-center gap-2 text-[var(--muted)]">
           <span>Per page</span>
           <select
-            className="rounded-lg border border-[var(--line)] bg-[var(--card)] px-2 py-1.5 text-[var(--ink)]"
+            className="rounded-xl border border-[var(--line)] bg-white px-2 py-1.5 text-[var(--ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]"
             value={pageSize}
             disabled={disabled}
             onChange={(event) => onPageSizeChange(Number(event.target.value))}
           >
-            {PAGE_SIZES.map((size) => (
+            {pageSizes.map((size) => (
               <option key={size} value={size}>
                 {size}
               </option>
@@ -46,7 +48,7 @@ export function PaginationBar({
         <div className="flex items-center gap-1">
           <button
             type="button"
-            className="rounded-lg border border-[var(--line)] px-2.5 py-1.5 disabled:opacity-50"
+            className="rounded-xl border border-[var(--line)] bg-white px-2.5 py-1.5 transition duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
             disabled={disabled || safePage <= 1}
             onClick={() => onPageChange(safePage - 1)}
           >
@@ -57,7 +59,7 @@ export function PaginationBar({
           </span>
           <button
             type="button"
-            className="rounded-lg border border-[var(--line)] px-2.5 py-1.5 disabled:opacity-50"
+            className="rounded-xl border border-[var(--line)] bg-white px-2.5 py-1.5 transition duration-200 hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
             disabled={disabled || safePage >= totalPages}
             onClick={() => onPageChange(safePage + 1)}
           >

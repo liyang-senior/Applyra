@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/DashboardShell";
+import { PageHeading } from "@/components/PageHeading";
 import { EmailTemplatesPanel } from "@/components/EmailTemplatesPanel";
 import { listEmailTemplates } from "@/lib/email-templates";
 import { listResumeProfiles } from "@/lib/profiles";
@@ -25,15 +26,10 @@ export default async function EmailTemplatesPage() {
 
   return (
     <DashboardShell user={user} active="email-templates">
-      <div className="mb-6">
-        <h1 className="font-[family-name:var(--font-fraunces)] text-3xl tracking-tight sm:text-4xl">
-          Email templates
-        </h1>
-        <p className="mt-2 text-sm text-[var(--muted)] sm:text-base">
-          Pick a profile, copy a reply with their first name, or expand a title
-          to read the full template.
-        </p>
-      </div>
+      <PageHeading title="Email templates">
+        Pick a profile, copy a reply with their first name, or expand a title
+        to read the full template.
+      </PageHeading>
       <EmailTemplatesPanel
         initialTemplates={templates}
         profiles={profiles}

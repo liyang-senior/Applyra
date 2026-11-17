@@ -56,12 +56,310 @@ input[type="reset"]:disabled {
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateY(-10px) scale(0.98);
+    transform: translateX(36px) scale(0.96);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: none;
   }
+}
+
+@keyframes toast-life {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes scrape-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scrape-row {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scrape-drawer {
+  0% {
+    opacity: 0.4;
+    transform: translateX(108%);
+  }
+  62% {
+    opacity: 1;
+    transform: translateX(-12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scrape-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes filter-edge {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes filter-head {
+  from {
+    opacity: 0;
+    transform: translateX(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes filter-close {
+  from {
+    opacity: 0;
+    transform: rotate(-80deg) scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes filter-card {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.toast-life {
+  display: block;
+  height: 3px;
+  transform-origin: left center;
+  background: #e7d7c3;
+}
+
+.toast-card-ok .toast-life {
+  background: #3dbe7a;
+}
+
+.toast-card-error .toast-life {
+  background: #e07a6a;
+}
+
+.soft-card {
+  border-radius: 1.5rem;
+  border: 1px solid var(--line);
+  background: linear-gradient(135deg, #fffdf8 0%, #f4fbf7 46%, #fdf8ef 100%);
+  box-shadow: 0 16px 40px rgba(48, 36, 20, 0.06);
+}
+
+.data-shell {
+  overflow: hidden;
+  border-radius: 1.5rem;
+  border: 1px solid var(--line);
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(48, 36, 20, 0.05);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.data-table thead {
+  background: linear-gradient(90deg, #f4fbf7, #fdf8ef 55%, #f3fafb);
+  color: var(--muted);
+}
+
+.data-table th {
+  text-align: center;
+  font-weight: 500;
+}
+
+.data-table tbody tr {
+  border-bottom: 1px solid var(--line);
+  border-left: 4px solid transparent;
+}
+
+.data-table tbody tr:last-child {
+  border-bottom: 0;
+}
+
+.data-table tbody tr:nth-child(5n + 1) {
+  background: #f4fbf7;
+  border-left-color: #0e7a45;
+}
+
+.data-table tbody tr:nth-child(5n + 2) {
+  background: #fdf8ef;
+  border-left-color: #c4841d;
+}
+
+.data-table tbody tr:nth-child(5n + 3) {
+  background: #f3fafb;
+  border-left-color: #1f5f73;
+}
+
+.data-table tbody tr:nth-child(5n + 4) {
+  background: #fbf6fb;
+  border-left-color: #6b3f72;
+}
+
+.data-table tbody tr:nth-child(5n + 5) {
+  background: #fdf6f4;
+  border-left-color: #9d3428;
+}
+
+.tone-list > li {
+  border-left: 4px solid transparent;
+}
+
+.tone-list > li:nth-child(5n + 1) {
+  background: #f4fbf7;
+  border-left-color: #0e7a45;
+}
+
+.tone-list > li:nth-child(5n + 2) {
+  background: #fdf8ef;
+  border-left-color: #c4841d;
+}
+
+.tone-list > li:nth-child(5n + 3) {
+  background: #f3fafb;
+  border-left-color: #1f5f73;
+}
+
+.tone-list > li:nth-child(5n + 4) {
+  background: #fbf6fb;
+  border-left-color: #6b3f72;
+}
+
+.tone-list > li:nth-child(5n + 5) {
+  background: #fdf6f4;
+  border-left-color: #9d3428;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scrape-rise {
+    animation: scrape-rise 0.45s ease both;
+  }
+
+  .scrape-row {
+    animation: scrape-row 0.4s ease both;
+  }
+
+  .scrape-drawer {
+    animation: scrape-drawer 0.52s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .scrape-fade {
+    animation: scrape-fade 0.28s ease both;
+  }
+
+  .toast-card {
+    animation: toast-in 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .toast-life {
+    animation: toast-life 3.2s linear forwards;
+  }
+
+  .filter-edge {
+    transform-origin: top center;
+    animation: filter-edge 0.55s 0.12s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .filter-head {
+    animation: filter-head 0.4s 0.16s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .filter-close {
+    animation: filter-close 0.45s 0.22s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .filter-cascade > * {
+    animation: filter-card 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .filter-cascade > *:nth-child(1) { animation-delay: 0.16s; }
+  .filter-cascade > *:nth-child(2) { animation-delay: 0.22s; }
+  .filter-cascade > *:nth-child(3) { animation-delay: 0.28s; }
+  .filter-cascade > *:nth-child(4) { animation-delay: 0.34s; }
+  .filter-cascade > *:nth-child(5) { animation-delay: 0.4s; }
+  .filter-cascade > *:nth-child(6) { animation-delay: 0.46s; }
+  .filter-cascade > *:nth-child(7) { animation-delay: 0.52s; }
+  .filter-cascade > *:nth-child(8) { animation-delay: 0.58s; }
+  .filter-cascade > *:nth-child(9) { animation-delay: 0.64s; }
+  .filter-cascade > *:nth-child(10) { animation-delay: 0.7s; }
+  .filter-cascade > *:nth-child(11) { animation-delay: 0.76s; }
+  .filter-cascade > *:nth-child(12) { animation-delay: 0.82s; }
+  .filter-cascade > *:nth-child(13) { animation-delay: 0.88s; }
+  .filter-cascade > *:nth-child(14) { animation-delay: 0.94s; }
+  .filter-cascade > *:nth-child(15) { animation-delay: 1s; }
+  .filter-cascade > *:nth-child(16) { animation-delay: 1.06s; }
+  .filter-cascade > *:nth-child(17) { animation-delay: 1.12s; }
+  .filter-cascade > *:nth-child(18) { animation-delay: 1.18s; }
+  .filter-cascade > *:nth-child(n + 19) { animation-delay: 1.24s; }
+
+  .data-table tbody tr,
+  .tone-list > li {
+    animation: scrape-row 0.4s ease both;
+  }
+
+  .data-table tbody tr:nth-child(1),
+  .tone-list > li:nth-child(1) { animation-delay: 0.02s; }
+  .data-table tbody tr:nth-child(2),
+  .tone-list > li:nth-child(2) { animation-delay: 0.05s; }
+  .data-table tbody tr:nth-child(3),
+  .tone-list > li:nth-child(3) { animation-delay: 0.08s; }
+  .data-table tbody tr:nth-child(4),
+  .tone-list > li:nth-child(4) { animation-delay: 0.11s; }
+  .data-table tbody tr:nth-child(5),
+  .tone-list > li:nth-child(5) { animation-delay: 0.14s; }
+  .data-table tbody tr:nth-child(6),
+  .tone-list > li:nth-child(6) { animation-delay: 0.17s; }
+  .data-table tbody tr:nth-child(7),
+  .tone-list > li:nth-child(7) { animation-delay: 0.2s; }
+  .data-table tbody tr:nth-child(8),
+  .tone-list > li:nth-child(8) { animation-delay: 0.23s; }
+  .data-table tbody tr:nth-child(9),
+  .tone-list > li:nth-child(9) { animation-delay: 0.26s; }
+  .data-table tbody tr:nth-child(10),
+  .tone-list > li:nth-child(10) { animation-delay: 0.29s; }
+  .data-table tbody tr:nth-child(n + 11),
+  .tone-list > li:nth-child(n + 11) { animation-delay: 0.32s; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -69,6 +367,8 @@ input[type="reset"]:disabled {
   *::before,
   *::after {
     transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
   }
 
   @keyframes toast-in {

@@ -9,7 +9,7 @@ export function useToast() {
   const dismissToast = useCallback(() => setToast(null), []);
 
   const showToast = useCallback((text: string, kind: ToastKind = "ok") => {
-    setToast({ text, kind });
+    setToast({ text, kind, id: Date.now() });
   }, []);
 
   const toastHost = <Toast toast={toast} onClose={dismissToast} />;

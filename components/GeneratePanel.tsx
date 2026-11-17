@@ -391,7 +391,7 @@ export function GeneratePanel({
 
   if (profiles.length === 0) {
     return (
-      <p className="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-6 text-[var(--muted)]">
+      <p className="soft-card p-6 text-[var(--muted)]">
         No resume profiles are assigned to you yet. Ask an admin to assign one
         from Profiles.
       </p>
@@ -402,7 +402,7 @@ export function GeneratePanel({
     <>
       {toastHost}
       <div className="w-full space-y-6">
-        <div className="w-full space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5 sm:p-6">
+        <div className="w-full space-y-4 soft-card p-5 sm:p-6">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <label className="block text-sm md:col-span-2 xl:col-span-1">
               <span className="mb-1 block font-medium">Profile</span>
@@ -608,7 +608,7 @@ export function GeneratePanel({
         </div>
 
         {noApi ? (
-          <div className="w-full space-y-4 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
+          <div className="w-full space-y-4 soft-card p-5">
             <div>
               <h2 className="mb-2 font-medium">Paste ChatGPT reply</h2>
               <textarea
@@ -658,7 +658,7 @@ export function GeneratePanel({
         ) : null}
 
         {lastFile ? (
-          <div className="w-full rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5">
+          <div className="w-full soft-card p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <h2 className="font-medium">{lastFile.filename}</h2>

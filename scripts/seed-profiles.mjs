@@ -65,7 +65,6 @@ for (const seed of seeds) {
   );
   const data = {
     ...raw,
-    gender: seed.gender || raw.gender || "unspecified",
     techStack: seed.techStack || raw.techStack || "",
     street: raw.street || "",
     birthday: raw.birthday || "",
@@ -74,6 +73,7 @@ for (const seed of seeds) {
     github: raw.github || "",
     cvLink: raw.cvLink || "",
     zip: raw.zip || "",
+    gender: raw.gender || "unspecified",
   };
   const existing = await pool.query(
     `SELECT id FROM resume_profiles

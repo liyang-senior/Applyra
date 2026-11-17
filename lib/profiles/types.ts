@@ -17,7 +17,7 @@ export type ProfileEducation = {
   grade?: string;
 };
 
-/** Resume profile payload — same fields as Origin resume JSON, plus gender/techStack. */
+/** Resume profile payload — same fields as Origin resume JSON, plus gender and techStack. */
 export type ResumeProfileData = {
   name: string;
   title: string;
@@ -74,7 +74,7 @@ export const emptyProfileData = (): ResumeProfileData => ({
   street: "",
   birthday: "",
   ssn: "",
-  gender: "unspecified",
+  gender: "male",
   techStack: "",
   base_skills: [],
   experience: [],

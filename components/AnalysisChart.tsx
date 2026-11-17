@@ -36,7 +36,7 @@ export function AnalysisChart({ points }: { points?: AnalysisPoint[] | null }) {
   const labelEvery = Math.max(1, Math.ceil(series.length / 7));
 
   return (
-    <div className="w-full overflow-x-auto rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
+    <div className="w-full overflow-x-auto soft-card p-4">
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="h-auto w-full min-w-[28rem]"

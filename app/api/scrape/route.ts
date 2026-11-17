@@ -1,0 +1,169 @@
+import { NextResponse } from "next/server";
+import { userCanAccessProfile } from "@/lib/profiles";
+import { isJobPlatform } from "@/lib/scrape/platforms";
+import {
+  parseJobrightAuth,
+  parseJobrightFilters,
+  recommendJobright,
+  searchJobright,
+  verifyJobrightLogin,
+} from "@/lib/scrape/jobright";
+import {
+  deleteAllScrapedJobs,
+  deleteScrapedJobs,
+  listScrapedJobs,
+  saveScrapedJobs,
+  verifyScrapedJobs,
+} from "@/lib/scrape/store";
+import { getRequestAccount } from "@/lib/server/auth";
+import { jsonError } from "@/lib/server/http";
+
+export const dynamic = "force-dynamic";
+
+export async function GET(request: Request) {
+  const user = await getRequestAccount(request);
+  if (!user) return jsonError("Sign in required.", 401);
+
+  const url = new URL(request.url);
+  const profileId = url.searchParams.get("profileId") || "";
+  const platform = url.searchParams.get("platform") || "";
+  if (!profileId || !isJobPlatform(platform)) {
+    return jsonError("Select a profile and platform.", 400);
+  }
+  if (!(await userCanAccessProfile(user, profileId))) {
+    return jsonError("Profile not found.", 404);
+  }
+
+  const { jobs, held } = await listScrapedJobs(user.id, profileId, platform);
+  return NextResponse.json({ jobs, held });
+}
+
+export async function POST(request: Request) {
+  const user = await getRequestAccount(request);
+  if (!user) return jsonError("Sign in required.", 401);
+
+  let body: {
+    profileId?: string;
+    platform?: string;
+    mode?: string;
+    filters?: unknown;
+    auth?: unknown;
+  };
+  try {
+    body = (await request.json()) as typeof body;
+  } catch {
+    return jsonError("Invalid JSON body.", 400);
+  }
+
+  if (body.mode === "login") {
+    try {
+      await verifyJobrightLogin(parseJobrightAuth(body.auth));
+      return NextResponse.json({ ok: true });
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Jobright sign-in failed. Try again.";
+      const status =
+        message.startsWith("Enter") ||
+        message.startsWith("Paste") ||
+        message.startsWith("Jobright email") ||
+        message.startsWith("Jobright rejected")
+          ? 400
+          : 502;
+      return jsonError(message, status);
+    }
+  }
+
+  const profileId = String(body.profileId || "");
+  const platform = String(body.platform || "");
+  if (!profileId) return jsonError("Select a profile.", 400);
+  if (!isJobPlatform(platform)) {
+    return jsonError("Select a job platform.", 400);
+  }
+  if (!(await userCanAccessProfile(user, profileId))) {
+    return jsonError("Profile not found.", 404);
+  }
+
+  try {
+    const recommended = body.mode === "recommended";
+    const filters = parseJobrightFilters(body.filters, {
+      requireKeywords: !recommended,
+    });
+    const auth = parseJobrightAuth(body.auth);
+    const foundJobs = recommended
+      ? await recommendJobright(filters, auth, request.signal)
+      : await searchJobright(filters, auth, request.signal);
+    const saved = await saveScrapedJobs({
+      userId: user.id,
+      profileId,
+      platform,
+      jobs: foundJobs,
+    });
+    const listed = await listScrapedJobs(user.id, profileId, platform);
+    return NextResponse.json({
+      found: foundJobs.length,
+      added: saved.added,
+      skipped: saved.skipped,
+      jobs: listed.jobs,
+      held: listed.held,
+    });
+  } catch (error) {
+    const message =
+      error instanceof Error && error.message
+        ? error.message
+        : "Jobright search failed. Try again.";
+    const status =
+      message.startsWith("Enter") ||
+      message.startsWith("Paste") ||
+      message.startsWith("Jobright email") ||
+      message.startsWith("Jobright rejected")
+        ? 400
+        : 502;
+    return jsonError(message, status);
+  }
+}
+
+export async function PATCH(request: Request) {
+  const user = await getRequestAccount(request);
+  if (!user) return jsonError("Sign in required.", 401);
+
+  let body: { ids?: string[]; verified?: boolean };
+  try {
+    body = (await request.json()) as { ids?: string[]; verified?: boolean };
+  } catch {
+    return jsonError("Invalid JSON body.", 400);
+  }
+
+  const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
+  if (ids.length === 0) return jsonError("Select at least one link.", 400);
+  if (typeof body.verified !== "boolean") {
+    return jsonError("Choose whether the links are verified.", 400);
+  }
+  const updated = await verifyScrapedJobs(user.id, ids, body.verified);
+  if (updated === 0) return jsonError("Job links not found.", 404);
+  return NextResponse.json({ ok: true, updated, verified: body.verified });
+}
+
+export async function DELETE(request: Request) {
+  const user = await getRequestAccount(request);
+  if (!user) return jsonError("Sign in required.", 401);
+
+  let body: { ids?: string[]; all?: boolean };
+  try {
+    body = (await request.json()) as { ids?: string[]; all?: boolean };
+  } catch {
+    return jsonError("Invalid JSON body.", 400);
+  }
+
+  if (body.all === true) {
+    const deleted = await deleteAllScrapedJobs(user.id);
+    return NextResponse.json({ ok: true, deleted });
+  }
+
+  const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
+  if (ids.length === 0) return jsonError("Select at least one link.", 400);
+  const deleted = await deleteScrapedJobs(user.id, ids);
+  if (deleted === 0) return jsonError("Job links not found.", 404);
+  return NextResponse.json({ ok: true, deleted });
+}

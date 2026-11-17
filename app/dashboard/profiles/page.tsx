@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { DashboardShell } from "@/components/DashboardShell";
+import { PageHeading } from "@/components/PageHeading";
 import { ResumeProfilesTable } from "@/components/ResumeProfilesTable";
 import { getCurrentAccount } from "@/lib/server/auth";
 import {
@@ -28,16 +29,11 @@ export default async function ProfilesPage() {
 
   return (
     <DashboardShell user={user} active="profiles">
-      <div className="mb-6">
-        <h1 className="font-[family-name:var(--font-fraunces)] text-3xl tracking-tight sm:text-4xl">
-          Profiles
-        </h1>
-        <p className="mt-2 text-sm text-[var(--muted)] sm:text-base">
-          {canManage
-            ? "Add resume profiles, assign them to users (not owners), and filter by assignee, gender, or tech stack."
-            : "Résumé profiles assigned to you. Open Detail to view (editing is disabled)."}
-        </p>
-      </div>
+      <PageHeading title="Profiles">
+        {canManage
+          ? "Add resume profiles, assign them to users (not owners), and filter by assignee, gender, or tech stack."
+          : "Résumé profiles assigned to you. Open Detail to view (editing is disabled)."}
+      </PageHeading>
       <ResumeProfilesTable
         profiles={profiles}
         assignableUsers={assignableUsers}

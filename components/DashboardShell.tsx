@@ -30,6 +30,7 @@ export function DashboardShell({
     | "history"
     | "profiles"
     | "generate"
+    | "scrape"
     | "analysis"
     | "email-templates";
   children: ReactNode;
@@ -107,6 +108,12 @@ export function DashboardShell({
               className={navClass(active === "generate")}
             >
               Generate
+            </Link>
+            <Link
+              href="/dashboard/scrape"
+              className={navClass(active === "scrape")}
+            >
+              Job links
             </Link>
             <Link
               href="/dashboard/history"

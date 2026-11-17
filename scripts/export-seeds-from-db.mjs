@@ -73,7 +73,7 @@ for (const row of profiles.rows) {
     file,
     name: data.name || "",
     email: data.email || "",
-    gender: data.gender || "male",
+    gender: data.gender || "unspecified",
     techStack: data.techStack || "",
   });
   console.log(`Wrote ${file}`);

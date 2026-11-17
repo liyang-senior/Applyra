@@ -1,7 +1,8 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AccountTable } from "@/components/AccountTable";
 import { DashboardShell } from "@/components/DashboardShell";
+import { PageHeading } from "@/components/PageHeading";
 import { getCurrentAccount } from "@/lib/server/auth";
 import { canManageAccounts } from "@/lib/server/types";
 import { listAccountsFor } from "@/lib/server/users";
@@ -29,21 +30,18 @@ export default async function UsersPage() {
 
   return (
     <DashboardShell user={user} active="users">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-[family-name:var(--font-fraunces)] text-4xl tracking-tight">
-            Users
-          </h1>
-          <p className="mt-2 text-[var(--muted)]">
-            {user.role === "owner"
-              ? "Owners can assign or remove admin, reset passwords, deactivate or activate accounts, and remove accounts."
-              : "Admins can reset passwords, deactivate, activate, and remove normal user accounts."}
+      <PageHeading
+        title="Users"
+        extra={
+          <p className="text-sm text-[var(--muted)]">
+            {accounts.length} {accounts.length === 1 ? "account" : "accounts"}
           </p>
-        </div>
-        <p className="text-sm text-[var(--muted)]">
-          {accounts.length} {accounts.length === 1 ? "account" : "accounts"}
-        </p>
-      </div>
+        }
+      >
+        {user.role === "owner"
+          ? "Owners can assign or remove admin, reset passwords, deactivate or activate accounts, and remove accounts."
+          : "Admins can reset passwords, deactivate, activate, and remove normal user accounts."}
+      </PageHeading>
       <AccountTable
         accounts={accounts}
         currentUserId={user.id}

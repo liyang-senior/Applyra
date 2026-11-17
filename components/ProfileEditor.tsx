@@ -26,8 +26,7 @@ const quietClass =
   "inline-flex h-10 w-full cursor-pointer items-center justify-center rounded-full text-sm font-medium text-[var(--green-deep)] hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-60";
 const dangerClass =
   "inline-flex h-10 w-full cursor-pointer items-center justify-center rounded-full text-sm font-medium text-[var(--danger)] hover:bg-[var(--danger-soft)] disabled:cursor-not-allowed disabled:opacity-60";
-const cardClass =
-  "rounded-2xl border border-[var(--line)] bg-[var(--card)] p-5 shadow-[0_10px_30px_rgba(48,36,20,0.04)]";
+const cardClass = "soft-card p-5";
 
 function EyeToggle({
   targetId,

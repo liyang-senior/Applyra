@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -115,9 +115,10 @@ export function AccountTable({
   return (
     <div>
       {toastHost}
-      <div className="overflow-x-auto rounded-2xl border border-[var(--line)] bg-[var(--card)]">
-        <table className="w-full border-collapse text-left text-sm">
-          <thead className="bg-[#faf7f1] text-[var(--muted)]">
+      <div className="overflow-x-auto">
+        <div className="data-shell min-w-[48rem]">
+        <table className="data-table">
+          <thead>
             <tr>
               <th scope="col" className="px-4 py-3 font-medium">
                 Name
@@ -140,23 +141,45 @@ export function AccountTable({
             </tr>
           </thead>
           <tbody>
-            {accounts.map((account) => {
+            {accounts.map((account, index) => {
+              const mark = [
+                "bg-[#e3f3ea] text-[#0c693b]",
+                "bg-[#f8ecd4] text-[#8a5a12]",
+                "bg-[#e3f1f5] text-[#1f5f73]",
+                "bg-[#f3e8f4] text-[#6b3f72]",
+                "bg-[#f8e8e4] text-[#9d3428]",
+              ][index % 5];
               const isYou = account.id === currentUserId;
               const confirming = confirmId === account.id;
               return (
-                <tr key={account.id} className="border-t border-[var(--line)]">
+                <tr key={account.id}>
                   <td className="px-4 py-3">
-                    <span className="font-medium">{account.name || "—"}</span>
-                    {isYou ? (
-                      <span className="ml-2 rounded-full bg-[var(--green-soft)] px-2 py-0.5 text-xs font-medium text-[var(--green-deep)]">
-                        You
+                    <div className="flex items-center gap-2.5">
+                      <span
+                        className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${mark}`}
+                      >
+                        {(account.name || account.email || "•").trim().charAt(0).toUpperCase()}
                       </span>
-                    ) : null}
+                      <span className="font-medium">{account.name || "—"}</span>
+                      {isYou ? (
+                        <span className="rounded-full bg-[var(--green-soft)] px-2 py-0.5 text-xs font-medium text-[var(--green-deep)]">
+                          You
+                        </span>
+                      ) : null}
+                    </div>
                   </td>
                   <td className="px-4 py-3">{account.email}</td>
                   <td className="px-4 py-3">{roleLabel(account.role)}</td>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    {account.active ? "Active" : "Deactivated"}
+                    <span
+                      className={
+                        account.active
+                          ? "rounded-full bg-[#e3f3ea] px-2.5 py-1 text-xs font-medium text-[#0c693b]"
+                          : "rounded-full bg-[#f8e8e4] px-2.5 py-1 text-xs font-medium text-[#9d3428]"
+                      }
+                    >
+                      {account.active ? "Active" : "Deactivated"}
+                    </span>
                   </td>
                   <td className="px-4 py-3 whitespace-nowrap text-[var(--muted)]">
                     {account.joined}
@@ -250,6 +273,7 @@ export function AccountTable({
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

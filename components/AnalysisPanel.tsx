@@ -100,7 +100,7 @@ export function AnalysisPanel({
   return (
     <div className="w-full space-y-5">
       {toastHost}
-      <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
+      <div className="flex flex-wrap items-end gap-3 soft-card p-4">
         <label className="block min-w-[10rem] flex-1 text-sm">
           <span className="mb-1 block font-medium">From</span>
           <input
@@ -174,19 +174,19 @@ export function AnalysisPanel({
       </div>
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
+        <div className="soft-card p-4">
           <p className="text-sm text-[var(--muted)]">Generated</p>
           <p className="mt-1 font-[family-name:var(--font-fraunces)] text-3xl">
             {summary?.generated ?? "—"}
           </p>
         </div>
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
+        <div className="soft-card p-4">
           <p className="text-sm text-[var(--muted)]">Applied</p>
           <p className="mt-1 font-[family-name:var(--font-fraunces)] text-3xl">
             {summary?.applied ?? "—"}
           </p>
         </div>
-        <div className="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-4">
+        <div className="soft-card p-4">
           <p className="text-sm text-[var(--muted)]">Clearance flagged</p>
           <p className="mt-1 font-[family-name:var(--font-fraunces)] text-3xl">
             {summary?.clearance ?? "—"}
@@ -197,7 +197,7 @@ export function AnalysisPanel({
       {summary ? (
         <AnalysisChart points={summary.points} />
       ) : (
-        <p className="rounded-2xl border border-[var(--line)] bg-[var(--card)] p-6 text-[var(--muted)]">
+        <p className="soft-card p-6 text-[var(--muted)]">
           {pending ? "Loading chart…" : "No analysis data yet."}
         </p>
       )}

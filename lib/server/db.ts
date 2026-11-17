@@ -1,6 +1,6 @@
 import { Pool, type PoolClient } from "pg";
 
-const SCHEMA_VERSION = 9;
+const SCHEMA_VERSION = 16;
 
 const globalForPg = globalThis as typeof globalThis & {
   applyraPool?: Pool;
@@ -226,6 +226,87 @@ async function createSchema() {
       created_at timestamptz NOT NULL,
       updated_at timestamptz NOT NULL
     )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS scraped_jobs (
+      id uuid PRIMARY KEY,
+      user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      profile_id uuid NOT NULL REFERENCES resume_profiles(id) ON DELETE CASCADE,
+      platform text NOT NULL,
+      job_title text NOT NULL,
+      company_name text NOT NULL,
+      job_link text NOT NULL,
+      dedupe_key text NOT NULL,
+      verified boolean NOT NULL DEFAULT false,
+      created_at timestamptz NOT NULL,
+      UNIQUE (user_id, profile_id, dedupe_key)
+    )
+  `);
+  await pool.query(`
+    ALTER TABLE scraped_jobs
+    ADD COLUMN IF NOT EXISTS verified boolean NOT NULL DEFAULT false
+  `);
+  await pool.query(`
+    ALTER TABLE scraped_jobs
+    ADD COLUMN IF NOT EXISTS match_score smallint
+  `);
+  await pool.query(`
+    ALTER TABLE scraped_jobs
+    ADD COLUMN IF NOT EXISTS posted_at timestamptz
+  `);
+  await pool.query(`
+    ALTER TABLE scraped_jobs
+    ADD COLUMN IF NOT EXISTS source text
+  `);
+  await pool.query(`
+    UPDATE scraped_jobs
+    SET source = COALESCE(NULLIF(source, ''), platform, 'jobright')
+    WHERE source IS NULL OR source = ''
+  `);
+  await pool.query(`
+    ALTER TABLE scraped_jobs
+    ALTER COLUMN source SET DEFAULT 'jobright'
+  `);
+  await pool.query(`
+    ALTER TABLE scraped_jobs
+    ALTER COLUMN source SET NOT NULL
+  `);
+  await pool.query(`
+    DO $$
+    DECLARE
+      constraint_name text;
+    BEGIN
+      FOR constraint_name IN
+        SELECT con.conname
+        FROM pg_constraint con
+        WHERE con.conrelid = 'scraped_jobs'::regclass
+          AND con.contype = 'u'
+          AND pg_get_constraintdef(con.oid) NOT LIKE '%profile_id%'
+      LOOP
+        EXECUTE format('ALTER TABLE scraped_jobs DROP CONSTRAINT %I', constraint_name);
+      END LOOP;
+      IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conrelid = 'scraped_jobs'::regclass
+          AND contype = 'u'
+          AND pg_get_constraintdef(oid) LIKE '%profile_id%'
+          AND pg_get_constraintdef(oid) LIKE '%dedupe_key%'
+      ) THEN
+        ALTER TABLE scraped_jobs
+          ADD CONSTRAINT scraped_jobs_user_profile_dedupe_key
+          UNIQUE (user_id, profile_id, dedupe_key);
+      END IF;
+    END $$;
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS scraped_jobs_lookup_idx
+    ON scraped_jobs (user_id, profile_id, platform, created_at DESC)
+  `);
+  await pool.query(`
+    DELETE FROM scraped_jobs
+    WHERE job_link ~* '(^|://|\\.)linkedin\\.com([/:?#]|$)'
+       OR job_link ~* '(^|://|\\.)lnkd\\.in([/:?#]|$)'
   `);
 
   const { seedResumeProfiles } = await import("@/lib/profiles/seed");
