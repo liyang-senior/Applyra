@@ -29,6 +29,7 @@ export type ProfileFilters = {
   userEmail?: string;
   gender?: string;
   techStack?: string;
+  assigneeIds?: string[];
 };
 
 function toProfile(
@@ -130,6 +131,14 @@ export async function listResumeProfiles(
           AND LOWER(u.email) LIKE $${params.length}
       )`);
     }
+    if (filters.assigneeIds && filters.assigneeIds.length > 0) {
+      params.push(filters.assigneeIds);
+      clauses.push(`EXISTS (
+        SELECT 1 FROM resume_profile_assignees a
+        WHERE a.profile_id = resume_profiles.id
+          AND a.user_id = ANY($${params.length}::uuid[])
+      )`);
+    }
 
     const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
     const result = await client.query<ProfileRow>(
@@ -156,6 +165,94 @@ export async function listResumeProfiles(
         assignees: people,
       };
     });
+  });
+}
+
+export type AssignedProfileInfo = {
+  id: string;
+  name: string;
+  title: string;
+  email: string;
+  phone: string;
+  location: string;
+  zip: string;
+  street: string;
+  birthday: string;
+  ssn: string;
+  linkedin: string;
+  cvLink: string;
+  assigneeIds: string[];
+};
+
+function toAssignedProfileInfo(
+  row: ProfileRow,
+  assigneeIds: string[],
+): AssignedProfileInfo {
+  return {
+    id: row.id,
+    name: row.data.name,
+    title: row.data.title,
+    email: row.data.email,
+    phone: row.data.phone,
+    location: row.data.location,
+    zip: row.data.zip,
+    street: row.data.street,
+    birthday: row.data.birthday,
+    ssn: row.data.ssn,
+    linkedin: row.data.linkedin,
+    cvLink: row.data.cvLink,
+    assigneeIds,
+  };
+}
+
+async function mapProfileInfo(client: PoolClient, rows: ProfileRow[]) {
+  const assignees = await loadAssignees(
+    client,
+    rows.map((row) => row.id),
+  );
+  return rows.map((row) =>
+    toAssignedProfileInfo(
+      row,
+      (assignees.get(row.id) || []).map((person) => person.id),
+    ),
+  );
+}
+
+export async function listAllProfileInfo(
+  assigneeIds: string[] = [],
+): Promise<AssignedProfileInfo[]> {
+  return withDb(async (client) => {
+    const params: unknown[] = [];
+    let where = "";
+    if (assigneeIds.length > 0) {
+      params.push(assigneeIds);
+      where = `WHERE EXISTS (
+        SELECT 1 FROM resume_profile_assignees a
+        WHERE a.profile_id = resume_profiles.id
+          AND a.user_id = ANY($1::uuid[])
+      )`;
+    }
+    const result = await client.query<ProfileRow>(
+      `SELECT * FROM resume_profiles ${where} ORDER BY LOWER(data->>'name')`,
+      params,
+    );
+    return mapProfileInfo(client, result.rows);
+  });
+}
+
+export async function listAssignedProfileInfo(
+  userId: string,
+): Promise<AssignedProfileInfo[]> {
+  return withDb(async (client) => {
+    const result = await client.query<ProfileRow>(
+      `SELECT p.*
+       FROM resume_profiles p
+       JOIN resume_profile_assignees a ON a.profile_id = p.id
+       WHERE a.user_id = $1
+       ORDER BY LOWER(p.data->>'name')`,
+      [userId],
+    );
+    return mapProfileInfo(client, result.rows);
   });
 }
 

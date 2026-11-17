@@ -1,9 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { AssigneeFilter, useServerProfiles } from "@/components/AssigneeFilter";
 import { useToast } from "@/components/useToast";
 import type { EmailTemplate } from "@/lib/email-templates";
 import type { ResumeProfileListItem } from "@/lib/profiles/types";
+import type { Account } from "@/lib/server/types";
 
 async function readError(response: Response) {
   try {
@@ -31,11 +33,17 @@ function buildCopyText(body: string, firstName: string) {
 export function EmailTemplatesPanel({
   initialTemplates,
   profiles,
+  assignees,
+  canManage = false,
 }: {
   initialTemplates: EmailTemplate[];
   profiles: ResumeProfileListItem[];
+  assignees?: Account[];
+  canManage?: boolean;
 }) {
   const { showToast, toastHost } = useToast();
+  const profilesQuery = useServerProfiles(profiles, assignees !== undefined);
+  const visibleProfiles = profilesQuery.rows;
   const [templates, setTemplates] = useState(initialTemplates);
   const [profileId, setProfileId] = useState(profiles[0]?.id || "");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -56,9 +64,15 @@ export function EmailTemplatesPanel({
   );
 
   const selectedProfile = useMemo(
-    () => profiles.find((profile) => profile.id === profileId) || null,
-    [profiles, profileId],
+    () => visibleProfiles.find((profile) => profile.id === profileId) || null,
+    [visibleProfiles, profileId],
   );
+
+  useEffect(() => {
+    if (visibleProfiles.some((profile) => profile.id === profileId)) return;
+    setProfileId(visibleProfiles[0]?.id || "");
+  }, [visibleProfiles, profileId]);
+
   const replyFirstName = firstNameFromProfile(selectedProfile?.name || "");
 
   function openCreate() {
@@ -158,6 +172,18 @@ export function EmailTemplatesPanel({
   return (
     <div className="w-full space-y-4">
       {toastHost}
+      {assignees ? (
+        <AssigneeFilter
+          users={assignees}
+          selectedIds={profilesQuery.assigneeIds}
+          disabled={profilesQuery.loading}
+          onChange={(ids) => {
+            void profilesQuery
+              .changeAssignees(ids)
+              .catch(() => showToast("Could not load profiles.", "error"));
+          }}
+        />
+      ) : null}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <p className="text-sm text-[var(--muted)]">
           {sorted.length} template{sorted.length === 1 ? "" : "s"}
@@ -172,12 +198,12 @@ export function EmailTemplatesPanel({
               className="min-w-[12rem] rounded-xl border border-[var(--line)] bg-[var(--card)] px-3 py-2"
               value={profileId}
               onChange={(event) => setProfileId(event.target.value)}
-              disabled={profiles.length === 0}
+              disabled={visibleProfiles.length === 0}
             >
-              {profiles.length === 0 ? (
+              {visibleProfiles.length === 0 ? (
                 <option value="">No profiles</option>
               ) : (
-                profiles.map((profile) => (
+                visibleProfiles.map((profile) => (
                   <option key={profile.id} value={profile.id}>
                     {profile.name || profile.email || "Untitled"}
                   </option>
@@ -185,14 +211,16 @@ export function EmailTemplatesPanel({
               )}
             </select>
           </label>
-          <button
-            type="button"
-            className="rounded-xl bg-[var(--green)] px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
-            disabled={pending}
-            onClick={openCreate}
-          >
-            Add template
-          </button>
+          {canManage ? (
+            <button
+              type="button"
+              className="rounded-xl bg-[var(--green)] px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+              disabled={pending}
+              onClick={openCreate}
+            >
+              Add template
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -232,22 +260,26 @@ export function EmailTemplatesPanel({
                       >
                         Copy
                       </button>
-                      <button
-                        type="button"
-                        className="rounded-xl border border-[var(--line)] px-3 py-1.5 text-sm"
-                        disabled={pending}
-                        onClick={() => openEdit(template)}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        type="button"
-                        className="rounded-xl border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-3 py-1.5 text-sm text-[var(--danger)]"
-                        disabled={pending}
-                        onClick={() => void removeTemplate(template)}
-                      >
-                        Remove
-                      </button>
+                      {canManage ? (
+                        <>
+                          <button
+                            type="button"
+                            className="rounded-xl border border-[var(--line)] px-3 py-1.5 text-sm"
+                            disabled={pending}
+                            onClick={() => openEdit(template)}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded-xl border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-3 py-1.5 text-sm text-[var(--danger)]"
+                            disabled={pending}
+                            onClick={() => void removeTemplate(template)}
+                          >
+                            Remove
+                          </button>
+                        </>
+                      ) : null}
                     </div>
                   </div>
                   {open ? (

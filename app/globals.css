@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --paper: #f3efe6;
+  --paper: #f4fbf7;
   --ink: #1c1915;
   --muted: #6d655c;
-  --line: #e4dacb;
-  --card: #fffdf8;
-  --rail: #e8e2d6;
+  --line: #d5e4da;
+  --card: #fbfffc;
+  --rail: #e7f3eb;
   --green: #0e7a45;
   --green-deep: #0c693b;
   --green-soft: #e3f3ea;
@@ -30,6 +30,19 @@ select {
   background-repeat: no-repeat;
   background-position: right 0.85rem center;
   background-size: 1rem 1rem;
+}
+
+input[type="checkbox"] {
+  width: 1.35rem;
+  height: 1.35rem;
+  accent-color: var(--green);
+  vertical-align: middle;
+}
+
+.app-table th:has(> input[type="checkbox"]),
+.app-table td:has(> input[type="checkbox"]) {
+  text-align: center;
+  vertical-align: middle;
 }
 
 button:not(:disabled),
@@ -242,6 +255,75 @@ input[type="reset"]:disabled {
   border-left-color: #9d3428;
 }
 
+.app-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.875rem;
+}
+
+.app-table thead {
+  background: linear-gradient(90deg, #f4fbf7, #fdf8ef 55%, #f3fafb);
+  color: var(--muted);
+}
+
+.app-table th {
+  text-align: center;
+  font-weight: 500;
+}
+
+.app-table td {
+  text-align: left;
+}
+
+.app-table th + th,
+.app-table td + td,
+.data-table th + th,
+.data-table td + td {
+  border-left: 1px solid color-mix(in srgb, var(--line) 75%, white);
+}
+
+.app-table tbody tr {
+  border-bottom: 1px solid var(--line);
+}
+
+.app-table tbody tr:last-child {
+  border-bottom: 0;
+}
+
+.app-table[data-selectable="true"] tbody tr[data-row-id] {
+  cursor: pointer;
+}
+
+.app-table-striped tbody tr {
+  border-left: 4px solid transparent;
+}
+
+.app-table-striped tbody tr:nth-child(5n + 1) {
+  background: #f4fbf7;
+  border-left-color: #0e7a45;
+}
+
+.app-table-striped tbody tr:nth-child(5n + 2) {
+  background: #fdf8ef;
+  border-left-color: #c4841d;
+}
+
+.app-table-striped tbody tr:nth-child(5n + 3) {
+  background: #f3fafb;
+  border-left-color: #1f5f73;
+}
+
+.app-table-striped tbody tr:nth-child(5n + 4) {
+  background: #fbf6fb;
+  border-left-color: #6b3f72;
+}
+
+.app-table-striped tbody tr:nth-child(5n + 5) {
+  background: #fdf6f4;
+  border-left-color: #9d3428;
+}
+
 .tone-list > li {
   border-left: 4px solid transparent;
 }
@@ -334,31 +416,43 @@ input[type="reset"]:disabled {
   .filter-cascade > *:nth-child(n + 19) { animation-delay: 1.24s; }
 
   .data-table tbody tr,
+  .app-table tbody tr,
   .tone-list > li {
     animation: scrape-row 0.4s ease both;
   }
 
   .data-table tbody tr:nth-child(1),
+  .app-table tbody tr:nth-child(1),
   .tone-list > li:nth-child(1) { animation-delay: 0.02s; }
   .data-table tbody tr:nth-child(2),
+  .app-table tbody tr:nth-child(2),
   .tone-list > li:nth-child(2) { animation-delay: 0.05s; }
   .data-table tbody tr:nth-child(3),
+  .app-table tbody tr:nth-child(3),
   .tone-list > li:nth-child(3) { animation-delay: 0.08s; }
   .data-table tbody tr:nth-child(4),
+  .app-table tbody tr:nth-child(4),
   .tone-list > li:nth-child(4) { animation-delay: 0.11s; }
   .data-table tbody tr:nth-child(5),
+  .app-table tbody tr:nth-child(5),
   .tone-list > li:nth-child(5) { animation-delay: 0.14s; }
   .data-table tbody tr:nth-child(6),
+  .app-table tbody tr:nth-child(6),
   .tone-list > li:nth-child(6) { animation-delay: 0.17s; }
   .data-table tbody tr:nth-child(7),
+  .app-table tbody tr:nth-child(7),
   .tone-list > li:nth-child(7) { animation-delay: 0.2s; }
   .data-table tbody tr:nth-child(8),
+  .app-table tbody tr:nth-child(8),
   .tone-list > li:nth-child(8) { animation-delay: 0.23s; }
   .data-table tbody tr:nth-child(9),
+  .app-table tbody tr:nth-child(9),
   .tone-list > li:nth-child(9) { animation-delay: 0.26s; }
   .data-table tbody tr:nth-child(10),
+  .app-table tbody tr:nth-child(10),
   .tone-list > li:nth-child(10) { animation-delay: 0.29s; }
   .data-table tbody tr:nth-child(n + 11),
+  .app-table tbody tr:nth-child(n + 11),
   .tone-list > li:nth-child(n + 11) { animation-delay: 0.32s; }
 }
 

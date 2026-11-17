@@ -9,6 +9,10 @@ export type Account = {
   createdAt: string;
 };
 
+export function isOwner(role: AccountRole) {
+  return role === "owner";
+}
+
 export function isStaff(role: AccountRole) {
   return role === "owner" || role === "admin";
 }

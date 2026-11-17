@@ -3,7 +3,7 @@ Return one completed resume JSON only. First char `{`, last `}`. No Markdown, pr
 Operator already has the skills/experience. Ignore originals that clash with the JD. Do not invent employers, dates, degrees, certs, or fake metrics.
 
 Schema:
-{"title":"headline","summary":"70-95 words","skills":{"Category":["tool"]},"experience":[{"title":"job title only","details":["bullet"]}],"certifications":[]}
+{"title":"headline","summary":"70-95 words, ending with one period","skills":{"Category":["tool"]},"experience":[{"title":"job title only","details":["full sentence ending with one period"]}],"certifications":[]}
 
 ## MUST DO
 1. Employers/order/dates = Employment History. Title = job title only (no company/dates). Keep headline/titles unless a light JD rename is clearly needed.
@@ -11,13 +11,10 @@ Schema:
    a) Put every JD required / preferred / "technologies we use" tool into Skills.
    b) Drop profile-only tools the JD never mentions.
    c) Categories match the JD stack (DevOps/AI/Backend/Data/Full-Stack/…). Languages → "Programming Languages". ~6-10 categories. One tool = one category. No duplicate/synonym/redundant skills. No keyword stuffing; no mixing soft duties into Skills.
-   d) When possible, reuse those same JD tools in experience bullets (ACTION + TECH + how + why). Prefer recent roles.
-3. BULLETS — counts: roles 1–3 → 6–8; middle → 4–6; LAST role → 5–7 (MERGE to fit).
-4. BULLETS — length mix per role (word-count; interleave 1/2/3-line; one period only, never ".."):
-   - 3–5 bullets @ 35–48 words
-   - ≤3 bullets @ 12–18 words
-   - rest @ 22–32 words
-   MERGE until the mix is met.
+   d) Skills lines render as "Category : Tool, Tool". Do not put a period after a skill line.
+   e) When possible, reuse those same JD tools in experience bullets (ACTION + TECH + how + why). Prefer recent roles.
+3. BULLETS — counts: roles 1–3 → 6–8; middle → 4–6; LAST role → 5–7.
+4. BULLETS — write the full responsibility. Do not shorten, clip, or MERGE a description to hit a word count. Each bullet is one complete sentence and ends with exactly one period, never "..".
 5. QUALITY:
    a) Dense and practical — no fluff, no padding, no nearly empty last page of content. Keep verified JD-relevant experience and essential tech.
    b) Every bullet is distinct (responsibility, implementation, achievement, or outcome). No identical or near-duplicate bullets within or across roles. If the same tech appears in multiple roles, differentiate use-case, challenge, and outcome.
@@ -35,7 +32,7 @@ Examples: Terraform→IaC; K8s/Docker→Containers; Prometheus→Observability; 
 
 ## Before return (fix issues; keep verified JD-relevant facts)
 - Skills: no duplicates/synonyms; JD preferred/required tools present; echo in bullets when possible.
-- Bullets: distinct across roles; last role 5–7; length mix met; titles have no company/dates.
+- Bullets: distinct across roles; last role 5–7; each bullet is the full description and ends with one period; titles have no company/dates.
 - No fluff / redundant length; consistent readable formatting.
 
 Candidate Profile:

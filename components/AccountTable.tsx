@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { DataTable } from "@/components/DataTable";
 import { useToast } from "@/components/useToast";
 import type { Account, AccountRole } from "@/lib/server/types";
 import { roleLabel } from "@/lib/server/types";
@@ -115,9 +116,7 @@ export function AccountTable({
   return (
     <div>
       {toastHost}
-      <div className="overflow-x-auto">
-        <div className="data-shell min-w-[48rem]">
-        <table className="data-table">
+      <DataTable striped minWidth="min-w-[48rem]">
           <thead>
             <tr>
               <th scope="col" className="px-4 py-3 font-medium">
@@ -272,9 +271,7 @@ export function AccountTable({
               );
             })}
           </tbody>
-        </table>
-        </div>
-      </div>
+      </DataTable>
     </div>
   );
 }

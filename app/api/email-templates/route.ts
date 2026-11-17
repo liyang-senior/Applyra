@@ -6,14 +6,10 @@ import {
 } from "@/lib/email-templates";
 import { getRequestAccount } from "@/lib/server/auth";
 import { jsonError } from "@/lib/server/http";
-import { canManageAccounts } from "@/lib/server/types";
 
 export async function GET(request: Request) {
   const user = await getRequestAccount(request);
   if (!user) return jsonError("Sign in required.", 401);
-  if (!canManageAccounts(user.role)) {
-    return jsonError("Only admins can manage email templates.", 403);
-  }
   const templates = await listEmailTemplates();
   return NextResponse.json({ templates });
 }

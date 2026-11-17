@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AssigneeFilter, useServerProfiles } from "@/components/AssigneeFilter";
 import { AssignUsersDialog } from "@/components/AssignUsersDialog";
+import { DataTable } from "@/components/DataTable";
 import { PaginationBar, paginateItems } from "@/components/PaginationBar";
 import { useToast } from "@/components/useToast";
 import {
@@ -28,14 +30,17 @@ export function ResumeProfilesTable({
   profiles: initial,
   assignableUsers,
   canManage = true,
+  assigneeChoices,
 }: {
   profiles: ResumeProfileListItem[];
   assignableUsers: Account[];
   canManage?: boolean;
+  assigneeChoices?: Account[];
 }) {
   const router = useRouter();
   const { showToast, toastHost } = useToast();
-  const [profiles, setProfiles] = useState(initial);
+  const profilesQuery = useServerProfiles(initial, assigneeChoices !== undefined);
+  const profiles = profilesQuery.rows;
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     userName: "",
@@ -166,7 +171,7 @@ export function ResumeProfilesTable({
       const removed = results.filter((item) => item.ok).map((item) => item.id);
       const failed = results.find((item) => !item.ok);
       if (removed.length) {
-        setProfiles((prev) => prev.filter((item) => !removed.includes(item.id)));
+        profilesQuery.setRows((prev) => prev.filter((item) => !removed.includes(item.id)));
         setSelectedIds((prev) => prev.filter((id) => !removed.includes(id)));
         showToast(
           removed.length === 1
@@ -213,7 +218,7 @@ export function ResumeProfilesTable({
           name: account.name,
           email: account.email,
         }));
-      setProfiles((prev) =>
+      profilesQuery.setRows((prev) =>
         prev.map((item) =>
           item.id === profileId ? { ...item, assignees: people } : item,
         ),
@@ -233,6 +238,22 @@ export function ResumeProfilesTable({
   return (
     <>
       {toastHost}
+      {assigneeChoices ? (
+        <div className="mb-4">
+          <AssigneeFilter
+            users={assigneeChoices}
+            selectedIds={profilesQuery.assigneeIds}
+            disabled={profilesQuery.loading}
+            onChange={(ids) => {
+              setPage(1);
+              void profilesQuery
+                .changeAssignees(ids)
+                .then(() => setSelectedIds([]))
+                .catch(() => showToast("Could not load profiles.", "error"));
+            }}
+          />
+        </div>
+      ) : null}
       {canManage ? (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
@@ -372,9 +393,14 @@ export function ResumeProfilesTable({
         </label>
       </div>
 
-      <div className="-mx-3 overflow-x-auto px-3 sm:mx-0 sm:px-0">
-        <div className="data-shell min-w-[40rem] sm:min-w-0">
-          <table className="data-table">
+      <DataTable
+        striped
+        selectable={canManage}
+        minWidth="min-w-[40rem] sm:min-w-0"
+        selectedIds={selectedIds}
+        onSelectedIdsChange={setSelectedIds}
+        disabled={bulkPending}
+      >
             <thead>
               <tr>
                 {canManage ? (
@@ -437,6 +463,7 @@ export function ResumeProfilesTable({
                   return (
                   <tr
                     key={profile.id}
+                    data-row-id={profile.id}
                     className="align-top"
                   >
                     {canManage ? (
@@ -534,9 +561,7 @@ export function ResumeProfilesTable({
                 })
               )}
             </tbody>
-          </table>
-        </div>
-      </div>
+      </DataTable>
 
       <div className="mt-4">
         <PaginationBar

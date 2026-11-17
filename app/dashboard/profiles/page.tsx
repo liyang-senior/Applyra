@@ -9,7 +9,7 @@ import {
   listProfilesForUser,
   listResumeProfiles,
 } from "@/lib/profiles";
-import { canManageAccounts } from "@/lib/server/types";
+import { canManageAccounts, isOwner } from "@/lib/server/types";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +38,7 @@ export default async function ProfilesPage() {
         profiles={profiles}
         assignableUsers={assignableUsers}
         canManage={canManage}
+        assigneeChoices={isOwner(user.role) ? assignableUsers : undefined}
       />
     </DashboardShell>
   );

@@ -9,10 +9,10 @@ import { canManageAccounts } from "@/lib/server/types";
 
 function navClass(active: boolean) {
   return [
-    "block w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium",
+    "block w-full rounded-xl px-3 py-2.5 text-left text-sm font-medium transition duration-150",
     active
       ? "bg-[var(--green-soft)] text-[var(--green-deep)]"
-      : "text-[var(--ink)] hover:bg-black/5",
+      : "text-[var(--ink)] hover:bg-[var(--green-soft)]/70",
   ].join(" ");
 }
 
@@ -32,17 +32,18 @@ export function DashboardShell({
     | "generate"
     | "scrape"
     | "analysis"
-    | "email-templates";
+    | "email-templates"
+    | "information";
   children: ReactNode;
 }) {
   const showUsers = canManageAccounts(user.role);
   const [navOpen, setNavOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <div className="sticky top-0 z-30">
+    <div className="flex h-dvh flex-col overflow-hidden">
+      <div className="z-30 shrink-0">
         <div className="h-1 bg-[var(--green)]" />
-        <header className="flex h-14 items-center justify-between gap-3 border-b border-[var(--line)] bg-[var(--paper)] px-3 sm:h-16 sm:px-6">
+        <header className="flex h-14 items-center justify-between gap-3 border-b border-[var(--line)] bg-white/90 px-3 text-[var(--ink)] shadow-[0_8px_24px_rgba(28,40,32,0.04)] backdrop-blur-md sm:h-16 sm:px-6">
           <div className="flex min-w-0 items-center gap-2">
             <button
               type="button"
@@ -67,7 +68,7 @@ export function DashboardShell({
           <UserMenu name={user.name || user.email} />
         </header>
       </div>
-      <div className="relative flex min-h-0 flex-1">
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
         {navOpen ? (
           <button
             type="button"
@@ -79,9 +80,9 @@ export function DashboardShell({
         <aside
           id="dashboard-nav"
           className={[
-            "z-20 w-56 shrink-0 border-r border-[var(--line)] bg-[var(--rail)]/95 px-3 py-6 backdrop-blur md:static md:block md:bg-[var(--rail)]/40",
+            "z-20 w-56 shrink-0 overflow-y-auto border-r border-[var(--line)] bg-white/80 px-3 py-6 text-[var(--ink)] backdrop-blur-md md:static md:block",
             navOpen
-              ? "absolute inset-y-0 left-0 block shadow-xl"
+              ? "absolute inset-y-0 left-0 block bg-white shadow-[8px_0_32px_rgba(28,40,32,0.08)]"
               : "hidden md:block",
           ].join(" ")}
         >
@@ -102,6 +103,12 @@ export function DashboardShell({
               className={navClass(active === "profiles")}
             >
               Profiles
+            </Link>
+            <Link
+              href="/dashboard/information"
+              className={navClass(active === "information")}
+            >
+              Information
             </Link>
             <Link
               href="/dashboard/generate"
@@ -127,17 +134,15 @@ export function DashboardShell({
             >
               Analysis
             </Link>
-            {showUsers ? (
-              <Link
-                href="/dashboard/email-templates"
-                className={navClass(active === "email-templates")}
-              >
-                Email templates
-              </Link>
-            ) : null}
+            <Link
+              href="/dashboard/email-templates"
+              className={navClass(active === "email-templates")}
+            >
+              Email templates
+            </Link>
           </nav>
         </aside>
-        <div className="min-w-0 flex-1 px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
+        <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-3 py-6 sm:px-6 sm:py-8 lg:px-8">
           {children}
         </div>
       </div>

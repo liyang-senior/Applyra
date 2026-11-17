@@ -34,7 +34,7 @@ export function UserMenu({ name }: { name: string }) {
     <div ref={rootRef} className="relative">
       <button
         type="button"
-        className="inline-flex h-10 max-w-[12rem] cursor-pointer items-center truncate rounded-full px-3.5 text-sm font-medium hover:bg-black/5"
+        className="inline-flex h-10 max-w-[14rem] cursor-pointer items-center truncate rounded-full px-3.5 text-sm font-medium text-[var(--ink)] hover:bg-[var(--green-soft)]"
         aria-expanded={open}
         aria-haspopup="menu"
         aria-controls={menuId}

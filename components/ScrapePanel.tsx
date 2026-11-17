@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AssigneeFilter, useServerProfiles } from "@/components/AssigneeFilter";
+import { DataTable } from "@/components/DataTable";
 import { PaginationBar, paginateItems } from "@/components/PaginationBar";
 import { useToast } from "@/components/useToast";
 import type { ResumeProfileListItem } from "@/lib/profiles/types";
+import type { Account } from "@/lib/server/types";
 import { JobrightFilterForm, emptyJobrightFilters } from "@/components/JobrightFilterForm";
 import { jobDedupeKey } from "@/lib/scrape/dedupe";
 import { JOB_PLATFORMS } from "@/lib/scrape/platforms";
@@ -100,10 +103,16 @@ async function readError(response: Response) {
 
 export function ScrapePanel({
   profiles,
+  assignees,
+  seeAll = false,
 }: {
   profiles: ResumeProfileListItem[];
+  assignees?: Account[];
+  seeAll?: boolean;
 }) {
   const { showToast, toastHost } = useToast();
+  const profilesQuery = useServerProfiles(profiles, assignees !== undefined);
+  const visibleProfiles = profilesQuery.rows;
   const [profileId, setProfileId] = useState(profiles[0]?.id || "");
   const [platform, setPlatform] = useState("");
   const [listMode, setListMode] = useState<"search" | "recommended">("recommended");
@@ -113,7 +122,6 @@ export function ScrapePanel({
   const [jobrightToken, setJobrightToken] = useState("");
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [jobs, setJobs] = useState<ScrapedJob[]>([]);
-  const [held, setHeld] = useState(0);
   const [loading, setLoading] = useState(false);
   const [scraping, setScraping] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
@@ -143,40 +151,52 @@ export function ScrapePanel({
     };
   }, [filtersOpen]);
 
+  const seesAllLinks = seeAll;
+  const listedProfileIds = seesAllLinks
+    ? visibleProfiles.map((profile) => profile.id)
+    : profileId
+      ? [profileId]
+      : [];
+  const listedKey = listedProfileIds.join(",");
+
   useEffect(() => {
-    if (!profileId || !platform) {
+    const profileIds = listedKey ? listedKey.split(",") : [];
+    if (profileIds.length === 0) {
       setJobs([]);
-      setHeld(0);
       return;
     }
     let cancelled = false;
-    setJobs([]);
-    setHeld(0);
     setSelectedIds([]);
     setLoading(true);
-    (async () => {
-      try {
-        const params = new URLSearchParams({ profileId, platform });
-        const response = await fetch(`/api/scrape?${params.toString()}`);
+    const params = new URLSearchParams();
+    for (const id of profileIds) params.append("profileId", id);
+    if (!seesAllLinks && platform) params.set("platform", platform);
+    void fetch(`/api/scrape?${params.toString()}`)
+      .then(async (response) => {
         if (!response.ok) {
           if (!cancelled) showToast(await readError(response), "error");
           return;
         }
-        const data = (await response.json()) as { jobs?: ScrapedJob[]; held?: number };
-        if (!cancelled) {
-          setJobs(data.jobs || []);
-          setHeld(data.held || 0);
-        }
-      } catch {
+        const data = (await response.json()) as { jobs?: ScrapedJob[] };
+        if (!cancelled) setJobs(Array.isArray(data.jobs) ? data.jobs : []);
+      })
+      .catch(() => {
         if (!cancelled) showToast("Could not load saved links.", "error");
-      } finally {
+      })
+      .finally(() => {
         if (!cancelled) setLoading(false);
-      }
-    })();
+      });
     return () => {
       cancelled = true;
     };
-  }, [profileId, platform, showToast]);
+  }, [listedKey, platform, seesAllLinks, showToast]);
+
+  useEffect(() => {
+    if (visibleProfiles.some((profile) => profile.id === profileId)) return;
+    const next = visibleProfiles[0];
+    setProfileId(next?.id || "");
+    setJobrightEmail(next?.email || "");
+  }, [visibleProfiles, profileId]);
 
   const visibleJobs = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -375,10 +395,20 @@ export function ScrapePanel({
         added?: number;
         skipped?: number;
         jobs?: ScrapedJob[];
-        held?: number;
       };
-      setJobs(data.jobs || []);
-      setHeld(data.held || 0);
+      if (seesAllLinks) {
+        const params = new URLSearchParams();
+        for (const id of visibleProfiles.map((profile) => profile.id)) {
+          params.append("profileId", id);
+        }
+        const refreshed = await fetch(`/api/scrape?${params.toString()}`);
+        const refreshedData = refreshed.ok
+          ? ((await refreshed.json()) as { jobs?: ScrapedJob[] })
+          : data;
+        setJobs(Array.isArray(refreshedData.jobs) ? refreshedData.jobs : []);
+      } else {
+        setJobs(Array.isArray(data.jobs) ? data.jobs : []);
+      }
       setSelectedIds([]);
       setPage(1);
       const added = data.added || 0;
@@ -408,12 +438,21 @@ export function ScrapePanel({
       if (error instanceof DOMException && error.name === "AbortError") {
         showToast("Scrape stopped. Links collected so far stay saved.");
         window.setTimeout(() => {
-          void fetch(`/api/scrape?${new URLSearchParams({ profileId, platform })}`)
+          void fetch(
+            `/api/scrape?${(() => {
+              const params = new URLSearchParams();
+              const ids = seesAllLinks
+                ? visibleProfiles.map((profile) => profile.id)
+                : [profileId];
+              for (const id of ids) params.append("profileId", id);
+              if (!seesAllLinks && platform) params.set("platform", platform);
+              return params;
+            })()}`,
+          )
             .then(async (response) => {
               if (!response.ok) return;
-              const data = (await response.json()) as { jobs?: ScrapedJob[]; held?: number };
-              setJobs(data.jobs || []);
-              setHeld(data.held || 0);
+              const data = (await response.json()) as { jobs?: ScrapedJob[] };
+              setJobs(Array.isArray(data.jobs) ? data.jobs : []);
               setSelectedIds([]);
               setPage(1);
             })
@@ -512,7 +551,9 @@ export function ScrapePanel({
     if (jobs.length === 0) return;
     if (
       !window.confirm(
-        "Remove all scraped links? This deletes every saved link, including ones on other pages.",
+        seesAllLinks
+          ? "Remove every saved link for the profiles in this list?"
+          : "Remove all scraped links? This deletes every saved link, including ones on other pages.",
       )
     ) {
       return;
@@ -522,7 +563,14 @@ export function ScrapePanel({
       const response = await fetch("/api/scrape", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ all: true }),
+        body: JSON.stringify({
+          all: true,
+          profileIds: seesAllLinks
+            ? visibleProfiles.map((profile) => profile.id)
+            : profileId
+              ? [profileId]
+              : [],
+        }),
       });
       if (!response.ok) {
         showToast(await readError(response), "error");
@@ -601,6 +649,18 @@ export function ScrapePanel({
     <>
       {toastHost}
       <div className="w-full space-y-6">
+        {assignees ? (
+          <AssigneeFilter
+            users={assignees}
+            selectedIds={profilesQuery.assigneeIds}
+            disabled={profilesQuery.loading}
+            onChange={(ids) => {
+              void profilesQuery
+                .changeAssignees(ids)
+                .catch(() => showToast("Could not load profiles.", "error"));
+            }}
+          />
+        ) : null}
         <div className="scrape-rise relative w-full overflow-hidden rounded-3xl border border-[var(--line)] bg-[linear-gradient(135deg,#fffdf8_0%,#f4fbf7_42%,#fdf8ef_100%)] p-5 shadow-[0_16px_40px_rgba(48,36,20,0.06)] sm:p-6">
           <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-[#e3f1f5]/80 blur-2xl" />
           <div className="pointer-events-none absolute -bottom-16 left-10 h-32 w-32 rounded-full bg-[#f3e8f4]/70 blur-2xl" />
@@ -617,12 +677,15 @@ export function ScrapePanel({
                   setProfileId(nextId);
                   setJobrightSignedIn(false);
                   setJobrightEmail(
-                    profiles.find((profile) => profile.id === nextId)?.email || "",
+                    visibleProfiles.find((profile) => profile.id === nextId)?.email || "",
                   );
                   setPage(1);
                 }}
               >
-                {profiles.map((profile) => (
+                {visibleProfiles.length === 0 ? (
+                  <option value="">No profiles for the selected assignees</option>
+                ) : null}
+                {visibleProfiles.map((profile) => (
                   <option key={profile.id} value={profile.id}>
                     {profile.name}
                     {profile.title ? ` — ${profile.title}` : ""}
@@ -641,7 +704,6 @@ export function ScrapePanel({
                   setPlatform(next);
                   setFilters(next ? emptyJobrightFilters() : {});
                   setFiltersOpen(false);
-                  setJobs([]);
                   setPage(1);
                 }}
               >
@@ -821,7 +883,7 @@ export function ScrapePanel({
           </div>
         </div>
 
-        {platform ? (
+        {profileId ? (
           <div className="scrape-rise space-y-4" style={{ animationDelay: "80ms" }}>
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
@@ -833,13 +895,6 @@ export function ScrapePanel({
                       ? ` (${visibleJobs.length} of ${jobs.length})`
                       : ` (${jobs.length})`}
                 </h2>
-                {held > 0 ? (
-                  <p className="mt-1 text-sm text-[var(--muted)]">
-                    {held} saved {held === 1 ? "link is" : "links are"} shared with
-                    another profile, so {held === 1 ? "it stays" : "they stay"} off
-                    this list.
-                  </p>
-                ) : null}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <button
@@ -915,10 +970,14 @@ export function ScrapePanel({
                 setPage(1);
               }}
             />
-            <div className="-mx-3 overflow-x-auto bg-white px-3 py-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-              <div className="min-w-[64rem] overflow-hidden rounded-3xl border border-[var(--line)] bg-white shadow-[0_18px_40px_rgba(48,36,20,0.05)] sm:min-w-0">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-[linear-gradient(90deg,#f4fbf7,#fdf8ef_55%,#f3fafb)] text-[var(--muted)]">
+            <DataTable
+              minWidth="min-w-[64rem] sm:min-w-0"
+              selectable
+              selectedIds={selectedIds}
+              onSelectedIdsChange={setSelectedIds}
+              disabled={busy}
+            >
+                  <thead>
                     <tr>
                       <th className="w-10 px-4 py-3 text-center">
                         <input
@@ -968,9 +1027,7 @@ export function ScrapePanel({
                         >
                           {loading
                             ? "Loading saved links…"
-                            : held > 0
-                              ? "Every saved link for this profile is also saved for another profile, so the list stays clear."
-                              : search.trim()
+                            : search.trim()
                               ? "No links match that search."
                               : "No job links yet. Run a scrape to collect them."}
                         </td>
@@ -981,7 +1038,8 @@ export function ScrapePanel({
                         return (
                         <tr
                           key={job.id}
-                          className={`scrape-row border-b border-l-4 border-[var(--line)] transition-colors duration-200 last:border-b-0 hover:brightness-[0.98] ${accent.edge} ${job.verified ? "bg-[#f3faf6]" : accent.wash}`}
+                          data-row-id={job.id}
+                          className={`border-b border-l-4 border-[var(--line)] transition-colors duration-200 last:border-b-0 hover:brightness-[0.98] ${accent.edge} ${job.verified ? "bg-[#f3faf6]" : accent.wash}`}
                           style={{ animationDelay: `${index * 35}ms` }}
                         >
                           <td className="px-4 py-3 align-middle">
@@ -1074,9 +1132,7 @@ export function ScrapePanel({
                       })
                     )}
                   </tbody>
-                </table>
-              </div>
-            </div>
+            </DataTable>
             <PaginationBar
               page={safePage}
               pageSize={pageSize}

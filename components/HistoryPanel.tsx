@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { DataTable } from "@/components/DataTable";
 import { PaginationBar, paginateItems } from "@/components/PaginationBar";
 import { useToast } from "@/components/useToast";
 import type { HistoryRecord } from "@/lib/history";
@@ -394,9 +395,14 @@ export function HistoryPanel({
         <p className="text-sm text-[var(--danger)]">{error}</p>
       ) : null}
 
-      <div className="-mx-3 overflow-x-auto px-3 sm:mx-0 sm:px-0">
-        <div className="data-shell min-w-[44rem] sm:min-w-0">
-          <table className="data-table">
+      <DataTable
+        striped
+        selectable
+        minWidth="min-w-[44rem] sm:min-w-0"
+        selectedIds={selectedIds}
+        onSelectedIdsChange={setSelectedIds}
+        disabled={bulkPending || pending}
+      >
             <thead>
               <tr>
                 <th className="w-10 px-3 py-3 sm:px-4">
@@ -431,6 +437,7 @@ export function HistoryPanel({
                 pageRows.map((record) => (
                   <tr
                     key={record.id}
+                    data-row-id={record.id}
                     className="align-top"
                   >
                     <td className="px-3 py-3 sm:px-4">
@@ -563,9 +570,7 @@ export function HistoryPanel({
                 ))
               )}
             </tbody>
-          </table>
-        </div>
-      </div>
+      </DataTable>
 
       <PaginationBar
         page={safePage}

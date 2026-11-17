@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { AssigneeFilter, useServerProfiles } from "@/components/AssigneeFilter";
 import { useToast } from "@/components/useToast";
 import {
   formatGenerateStatus,
@@ -8,6 +9,7 @@ import {
 } from "@/lib/generate/wait-job";
 import { analyzeJobDescription } from "@/lib/jd-checks";
 import type { ResumeProfileListItem } from "@/lib/profiles/types";
+import type { Account } from "@/lib/server/types";
 
 type ProviderOption = {
   id: string;
@@ -44,10 +46,14 @@ const fieldClass =
 
 export function GeneratePanel({
   profiles,
+  assignees,
 }: {
   profiles: ResumeProfileListItem[];
+  assignees?: Account[];
 }) {
   const { showToast, toastHost } = useToast();
+  const profilesQuery = useServerProfiles(profiles, assignees !== undefined);
+  const visibleProfiles = profilesQuery.rows;
   const [profileId, setProfileId] = useState(profiles[0]?.id || "");
   const [companyName, setCompanyName] = useState("");
   const [targetRole, setTargetRole] = useState("");
@@ -123,9 +129,14 @@ export function GeneratePanel({
     }
   }, [providerOption, model]);
 
+  useEffect(() => {
+    if (visibleProfiles.some((profile) => profile.id === profileId)) return;
+    setProfileId(visibleProfiles[0]?.id || "");
+  }, [visibleProfiles, profileId]);
+
   const selected = useMemo(
-    () => profiles.find((item) => item.id === profileId),
-    [profiles, profileId],
+    () => visibleProfiles.find((item) => item.id === profileId),
+    [visibleProfiles, profileId],
   );
 
   async function copyPrompt(kind: "resume" | "cover-letter") {
@@ -402,6 +413,18 @@ export function GeneratePanel({
     <>
       {toastHost}
       <div className="w-full space-y-6">
+        {assignees ? (
+          <AssigneeFilter
+            users={assignees}
+            selectedIds={profilesQuery.assigneeIds}
+            disabled={profilesQuery.loading}
+            onChange={(ids) => {
+              void profilesQuery
+                .changeAssignees(ids)
+                .catch(() => showToast("Could not load profiles.", "error"));
+            }}
+          />
+        ) : null}
         <div className="w-full space-y-4 soft-card p-5 sm:p-6">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <label className="block text-sm md:col-span-2 xl:col-span-1">
@@ -411,7 +434,10 @@ export function GeneratePanel({
                 value={profileId}
                 onChange={(e) => setProfileId(e.target.value)}
               >
-                {profiles.map((profile) => (
+                {visibleProfiles.length === 0 ? (
+                  <option value="">No profiles for the selected assignees</option>
+                ) : null}
+                {visibleProfiles.map((profile) => (
                   <option key={profile.id} value={profile.id}>
                     {profile.name}
                     {profile.title ? ` — ${profile.title}` : ""}

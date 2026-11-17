@@ -162,7 +162,7 @@ export function SignInForm() {
             <EyeToggle targetId="password" label="password" />
           </div>
         </div>
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--muted)]">
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-[#c9ddd2]">
           <input
             type="checkbox"
             checked={remember}
@@ -174,9 +174,9 @@ export function SignInForm() {
         <button type="submit" className={buttonClass} disabled={pending}>
           {pending ? "Signing in…" : "Sign in"}
         </button>
-        <p className="text-center text-sm text-[var(--muted)]">
+        <p className="text-center text-sm text-[#c9ddd2]">
           No account?{" "}
-          <Link href="/signup" className="font-medium text-[var(--green-deep)]">
+          <Link href="/signup" className="font-medium text-[#b6ebc8]">
             Sign up
           </Link>
         </p>
@@ -278,7 +278,7 @@ export function SignUpForm() {
             />
             <EyeToggle targetId="password" label="password" />
           </div>
-          <p className="mt-1.5 text-xs text-[var(--muted)]">At least 8 characters.</p>
+          <p className="mt-1.5 text-xs text-[#c9ddd2]">At least 8 characters.</p>
         </div>
         <div>
           <label htmlFor="confirm" className="mb-1.5 block text-sm font-semibold">
@@ -300,9 +300,9 @@ export function SignUpForm() {
         <button type="submit" className={buttonClass} disabled={pending}>
           {pending ? "Creating account…" : "Sign up"}
         </button>
-        <p className="text-center text-sm text-[var(--muted)]">
+        <p className="text-center text-sm text-[#c9ddd2]">
           Already have an account?{" "}
-          <Link href="/signin" className="font-medium text-[var(--green-deep)]">
+          <Link href="/signin" className="font-medium text-[#b6ebc8]">
             Sign in
           </Link>
         </p>

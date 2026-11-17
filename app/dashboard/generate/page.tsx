@@ -4,8 +4,12 @@ import { DashboardShell } from "@/components/DashboardShell";
 import { PageHeading } from "@/components/PageHeading";
 import { GeneratePanel } from "@/components/GeneratePanel";
 import { getCurrentAccount } from "@/lib/server/auth";
-import { listProfilesForUser, listResumeProfiles } from "@/lib/profiles";
-import { canManageAccounts } from "@/lib/server/types";
+import {
+  listAssignableAccounts,
+  listProfilesForUser,
+  listResumeProfiles,
+} from "@/lib/profiles";
+import { canManageAccounts, isOwner } from "@/lib/server/types";
 
 export const dynamic = "force-dynamic";
 
@@ -17,9 +21,13 @@ export default async function GeneratePage() {
   const user = await getCurrentAccount();
   if (!user) redirect("/signin");
 
-  const profiles = canManageAccounts(user.role)
-    ? await listResumeProfiles()
-    : await listProfilesForUser(user.id);
+  const owner = isOwner(user.role);
+  const [profiles, assignees] = await Promise.all([
+    canManageAccounts(user.role)
+      ? listResumeProfiles()
+      : listProfilesForUser(user.id),
+    owner ? listAssignableAccounts() : Promise.resolve([]),
+  ]);
 
   return (
     <DashboardShell user={user} active="generate">
@@ -28,7 +36,10 @@ export default async function GeneratePage() {
         ChatGPT, paste the reply, then download PDF/DOCX.
       </PageHeading>
       <div className="w-full">
-        <GeneratePanel profiles={profiles} />
+        <GeneratePanel
+          profiles={profiles}
+          assignees={owner ? assignees : undefined}
+        />
       </div>
     </DashboardShell>
   );

@@ -40,20 +40,34 @@ function asLines(value: unknown): string[] {
   return [];
 }
 
-function skillBlocks(skills: ResumeJson["skills"]) {
+function skillLines(skills: ResumeJson["skills"]) {
   if (!skills) return [];
   if (Array.isArray(skills)) {
     const lines = skills.map((item) => String(item || "").trim()).filter(Boolean);
-    return lines.length ? [{ label: "Skills", lines }] : [];
+    return lines.length ? [{ label: "Skills", text: lines.join(", ") }] : [];
   }
   return Object.entries(skills)
     .map(([label, lines]) => ({
       label,
-      lines: (Array.isArray(lines) ? lines : [String(lines || "")])
+      text: (Array.isArray(lines) ? lines : [String(lines || "")])
         .map((item) => String(item || "").trim())
-        .filter(Boolean),
+        .filter(Boolean)
+        .join(", "),
     }))
-    .filter((block) => block.lines.length > 0);
+    .filter((block) => block.text.length > 0);
+}
+
+function withPeriod(value: string) {
+  const text = value.trim();
+  if (!text) return text;
+  if (/[.!?]$/.test(text)) return text.replace(/\.{2,}$/, ".");
+  return `${text}.`;
+}
+
+function fullerText(left: string[], right: string[]) {
+  const size = (rows: string[]) => rows.join(" ").trim().length;
+  if (size(left) >= size(right)) return left;
+  return right;
 }
 
 export default async function HistoryResumePage({
@@ -73,7 +87,7 @@ export default async function HistoryResumePage({
         <h1 className="font-[family-name:var(--font-fraunces)] text-3xl">
           Resume
         </h1>
-        <p className="mt-3 text-[var(--muted)]">
+        <p className="mt-3 text-[#c9ddd2]">
           No resume was saved for this history item yet.
         </p>
       </main>
@@ -85,14 +99,15 @@ export default async function HistoryResumePage({
     ? await getResumeProfile(record.profileId)
     : null;
   const contact = profile?.data;
-  const summary = asLines(resume.summary);
-  const skills = skillBlocks(resume.skills);
+  const summary = asLines(resume.summary).map(withPeriod);
+  const skills = skillLines(resume.skills);
   const experience = Array.isArray(resume.experience) ? resume.experience : [];
+  const profileJobs = Array.isArray(contact?.experience) ? contact.experience : [];
   const education = Array.isArray(resume.education) ? resume.education : [];
   const certifications = asLines(resume.certifications);
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 text-[var(--ink)]">
+    <main className="mx-auto min-h-screen max-w-3xl bg-[#f7fbf8] px-4 py-10 text-[var(--ink)]">
       <div className="mb-8 border-b border-[var(--line)] pb-6">
         <p className="text-sm text-[var(--muted)]">
           {record.companyName || "Company"}
@@ -129,12 +144,12 @@ export default async function HistoryResumePage({
           <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-[var(--muted)]">
             Skills
           </h2>
-          <div className="space-y-3 text-sm">
+          <div className="space-y-2 text-sm leading-relaxed">
             {skills.map((block) => (
-              <div key={block.label}>
-                <p className="font-medium">{block.label}</p>
-                <p className="text-[var(--muted)]">{block.lines.join(" · ")}</p>
-              </div>
+              <p key={block.label}>
+                <span className="font-medium">{block.label} : </span>
+                {block.text}
+              </p>
             ))}
           </div>
         </section>
@@ -147,7 +162,11 @@ export default async function HistoryResumePage({
           </h2>
           <div className="space-y-5">
             {experience.map((job, index) => {
-              const bullets = asLines(job.base_bullets || job.details);
+              const saved = asLines(job.details);
+              const original = asLines(
+                job.base_bullets || profileJobs[index]?.base_bullets,
+              );
+              const bullets = fullerText(saved, original).map(withPeriod);
               return (
                 <div key={`${job.company}-${job.title}-${index}`}>
                   <div className="flex flex-wrap items-baseline justify-between gap-2">

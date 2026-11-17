@@ -3,22 +3,47 @@ import { getRequestAccount } from "@/lib/server/auth";
 import { jsonError } from "@/lib/server/http";
 import {
   createResumeProfile,
+  listAllProfileInfo,
+  listAssignedProfileInfo,
   listProfilesForUser,
   listResumeProfiles,
 } from "@/lib/profiles";
-import { canManageAccounts } from "@/lib/server/types";
+import { canManageAccounts, isOwner } from "@/lib/server/types";
+
+const ASSIGNEE_ID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function assigneeIdsFrom(url: URL) {
+  return [
+    ...new Set(
+      url.searchParams
+        .getAll("assigneeId")
+        .map((id) => id.trim())
+        .filter((id) => ASSIGNEE_ID.test(id)),
+    ),
+  ];
+}
 
 export async function GET(request: Request) {
   const user = await getRequestAccount(request);
   if (!user) return jsonError("Sign in required.", 401);
 
   const url = new URL(request.url);
+  const owner = isOwner(user.role);
+  const assigneeIds = owner ? assigneeIdsFrom(url) : [];
+  if (url.searchParams.get("view") === "info") {
+    const profiles = canManageAccounts(user.role)
+      ? await listAllProfileInfo(owner ? assigneeIds : [])
+      : await listAssignedProfileInfo(user.id);
+    return NextResponse.json({ profiles });
+  }
   if (canManageAccounts(user.role)) {
     const profiles = await listResumeProfiles({
       userName: url.searchParams.get("userName") || undefined,
       userEmail: url.searchParams.get("userEmail") || undefined,
       gender: url.searchParams.get("gender") || undefined,
       techStack: url.searchParams.get("techStack") || undefined,
+      assigneeIds,
     });
     return NextResponse.json({ profiles });
   }

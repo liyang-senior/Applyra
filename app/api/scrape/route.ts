@@ -11,12 +11,14 @@ import {
 import {
   deleteAllScrapedJobs,
   deleteScrapedJobs,
+  deleteScrapedJobsForProfiles,
   listScrapedJobs,
   saveScrapedJobs,
   verifyScrapedJobs,
 } from "@/lib/scrape/store";
 import { getRequestAccount } from "@/lib/server/auth";
 import { jsonError } from "@/lib/server/http";
+import { canManageAccounts } from "@/lib/server/types";
 
 export const dynamic = "force-dynamic";
 
@@ -25,17 +27,30 @@ export async function GET(request: Request) {
   if (!user) return jsonError("Sign in required.", 401);
 
   const url = new URL(request.url);
-  const profileId = url.searchParams.get("profileId") || "";
+  const profileIds = [
+    ...url.searchParams.getAll("profileId"),
+    ...(url.searchParams.get("profileIds") || "").split(","),
+  ]
+    .map((id) => id.trim())
+    .filter(Boolean);
+  const uniqueProfileIds = [...new Set(profileIds)];
   const platform = url.searchParams.get("platform") || "";
-  if (!profileId || !isJobPlatform(platform)) {
-    return jsonError("Select a profile and platform.", 400);
+  if (uniqueProfileIds.length === 0) {
+    return jsonError("Select a profile.", 400);
   }
-  if (!(await userCanAccessProfile(user, profileId))) {
-    return jsonError("Profile not found.", 404);
+  if (platform && !isJobPlatform(platform)) {
+    return jsonError("Unknown platform.", 400);
+  }
+  for (const profileId of uniqueProfileIds) {
+    if (!(await userCanAccessProfile(user, profileId))) {
+      return jsonError("Profile not found.", 404);
+    }
   }
 
-  const { jobs, held } = await listScrapedJobs(user.id, profileId, platform);
-  return NextResponse.json({ jobs, held });
+  const { jobs } = await listScrapedJobs(user.id, uniqueProfileIds, platform, {
+    allUsers: true,
+  });
+  return NextResponse.json({ jobs });
 }
 
 export async function POST(request: Request) {
@@ -100,13 +115,14 @@ export async function POST(request: Request) {
       platform,
       jobs: foundJobs,
     });
-    const listed = await listScrapedJobs(user.id, profileId, platform);
+    const listed = await listScrapedJobs(user.id, [profileId], platform, {
+      allUsers: true,
+    });
     return NextResponse.json({
       found: foundJobs.length,
       added: saved.added,
       skipped: saved.skipped,
       jobs: listed.jobs,
-      held: listed.held,
     });
   } catch (error) {
     const message =
@@ -140,7 +156,9 @@ export async function PATCH(request: Request) {
   if (typeof body.verified !== "boolean") {
     return jsonError("Choose whether the links are verified.", 400);
   }
-  const updated = await verifyScrapedJobs(user.id, ids, body.verified);
+  const updated = await verifyScrapedJobs(user.id, ids, body.verified, {
+    allUsers: canManageAccounts(user.role),
+  });
   if (updated === 0) return jsonError("Job links not found.", 404);
   return NextResponse.json({ ok: true, updated, verified: body.verified });
 }
@@ -149,21 +167,42 @@ export async function DELETE(request: Request) {
   const user = await getRequestAccount(request);
   if (!user) return jsonError("Sign in required.", 401);
 
-  let body: { ids?: string[]; all?: boolean };
+  let body: { ids?: string[]; all?: boolean; profileIds?: string[] };
   try {
-    body = (await request.json()) as { ids?: string[]; all?: boolean };
+    body = (await request.json()) as {
+      ids?: string[];
+      all?: boolean;
+      profileIds?: string[];
+    };
   } catch {
     return jsonError("Invalid JSON body.", 400);
   }
 
   if (body.all === true) {
-    const deleted = await deleteAllScrapedJobs(user.id);
+    const profileIds = Array.isArray(body.profileIds)
+      ? body.profileIds.map(String)
+      : [];
+    if (!canManageAccounts(user.role)) {
+      for (const profileId of profileIds) {
+        if (!(await userCanAccessProfile(user, profileId))) {
+          return jsonError("Profile not found.", 404);
+        }
+      }
+    }
+    const deleted =
+      profileIds.length > 0
+        ? await deleteScrapedJobsForProfiles(profileIds)
+        : canManageAccounts(user.role)
+          ? 0
+          : await deleteAllScrapedJobs(user.id);
     return NextResponse.json({ ok: true, deleted });
   }
 
   const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
   if (ids.length === 0) return jsonError("Select at least one link.", 400);
-  const deleted = await deleteScrapedJobs(user.id, ids);
+  const deleted = await deleteScrapedJobs(user.id, ids, {
+    allUsers: canManageAccounts(user.role),
+  });
   if (deleted === 0) return jsonError("Job links not found.", 404);
   return NextResponse.json({ ok: true, deleted });
 }
