@@ -10,3 +10,4 @@ npm-debug.log*
 .env*.local
 /data/users.json
 *.tsbuildinfo
+/tmp-e2e/
