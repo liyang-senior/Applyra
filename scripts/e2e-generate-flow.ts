@@ -10,6 +10,17 @@ import { generateCoverLetterFile } from "../lib/generate/cover-letter.js";
 import { generateResumeFile } from "../lib/generate/resume.js";
 
 type Result = { ok: boolean; name: string; detail?: string };
+
+type PolledGenerateJob = {
+  status?: string;
+  error?: string;
+  result?: {
+    mode?: string;
+    filename?: string;
+    base64?: string;
+    mimeType?: string;
+  };
+};
 const results: Result[] = [];
 
 function pass(name: string, detail = "") {
@@ -195,18 +206,14 @@ async function httpPromptCheck() {
       throw new Error(`no jobId for PDF: ${JSON.stringify(pdfBody).slice(0, 400)}`);
     }
 
-    let finished: {
-      status?: string;
-      error?: string;
-      result?: { mode?: string; filename?: string; base64?: string; mimeType?: string };
-    } | null = null;
+    let finished: PolledGenerateJob | null = null;
     for (let i = 0; i < 60; i++) {
       await new Promise((r) => setTimeout(r, 1000));
       const poll = await fetch(`${base}/api/generate?jobId=${jobId}`, {
         headers: { cookie: `applyra_session=${token}` },
       });
-      const pollBody = (await poll.json()) as { job?: typeof finished };
-      finished = pollBody.job || null;
+      const pollBody = (await poll.json()) as { job?: PolledGenerateJob | null };
+      finished = pollBody.job ?? null;
       if (
         finished &&
         (finished.status === "finished" || finished.status === "failed")
@@ -259,18 +266,14 @@ async function httpPromptCheck() {
     }
     const clJobId = clBody.jobId || clBody.job?.id;
     if (!clJobId) throw new Error(`no cover jobId: ${JSON.stringify(clBody).slice(0, 300)}`);
-    let clFinished: {
-      status?: string;
-      error?: string;
-      result?: { mode?: string; filename?: string; base64?: string };
-    } | null = null;
+    let clFinished: PolledGenerateJob | null = null;
     for (let i = 0; i < 60; i++) {
       await new Promise((r) => setTimeout(r, 1000));
       const poll = await fetch(`${base}/api/generate?jobId=${clJobId}`, {
         headers: { cookie: `applyra_session=${token}` },
       });
-      const pollBody = (await poll.json()) as { job?: typeof clFinished };
-      clFinished = pollBody.job || null;
+      const pollBody = (await poll.json()) as { job?: PolledGenerateJob | null };
+      clFinished = pollBody.job ?? null;
       if (
         clFinished &&
         (clFinished.status === "finished" || clFinished.status === "failed")
