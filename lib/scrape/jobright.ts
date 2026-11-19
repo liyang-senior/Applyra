@@ -52,6 +52,7 @@ export type ScrapedJobDraft = {
   jobTitle: string;
   companyName: string;
   jobLink: string;
+  jobrightJobId: string;
   dedupeKey: string;
   matchScore: number | null;
   postedAt: string | null;
@@ -178,10 +179,21 @@ function readJob(row: unknown): ScrapedJobDraft | null {
     jobTitle,
     companyName,
     jobLink: jobLink.slice(0, 2000),
+    jobrightJobId: cleanJobrightId(jobId),
     dedupeKey: jobDedupeKey(jobTitle, companyName),
     matchScore: readScore(raw.displayScore ?? job.displayScore),
     postedAt: readPostedAt(job.publishTime),
   };
+}
+
+export function cleanJobrightId(value: string) {
+  const id = value.trim();
+  return /^[a-f0-9]{24}$/i.test(id) ? id : "";
+}
+
+export function jobrightIdFromLink(link: string) {
+  const match = /jobright\.ai\/jobs\/info\/([a-f0-9]{24})/i.exec(link);
+  return match?.[1] || "";
 }
 
 function chosen(value: string | undefined, allowed: Set<string>) {
@@ -426,6 +438,29 @@ export function parseJobrightAuth(input: unknown): JobrightAuth {
     throw new Error("Enter the Jobright password.");
   }
   return { method: "password", email, password };
+}
+
+export async function markJobrightApplied(sessionId: string, jobId: string) {
+  const cleanId = cleanJobrightId(jobId);
+  if (!cleanId) throw new Error("That link has no Jobright job id.");
+  const { status, json } = await requestJson(new URL(`${API_BASE}/swan/job/apply`), {
+    method: "POST",
+    headers: { Cookie: `SESSION_ID=${sessionId}` },
+    body: { jobId: cleanId, source: 0 },
+    failure: "Jobright could not mark that job applied.",
+  });
+  const data = json as { success?: boolean; errorMsg?: string; errorCode?: number | string };
+  if (status === 401 || status === 403) {
+    throw new Error(
+      "Jobright rejected that sign-in. Check the email and password, or paste a current Cookie header.",
+    );
+  }
+  if (data.success === false) {
+    throw new Error(data.errorMsg || "Jobright could not mark that job applied.");
+  }
+  if (status < 200 || status >= 300) {
+    throw new Error(jobrightProblem("Jobright apply", status, data));
+  }
 }
 
 export async function resolveJobrightSession(auth: JobrightAuth) {

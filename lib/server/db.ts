@@ -1,6 +1,6 @@
 import { Pool, type PoolClient } from "pg";
 
-const SCHEMA_VERSION = 16;
+const SCHEMA_VERSION = 17;
 
 const globalForPg = globalThis as typeof globalThis & {
   applyraPool?: Pool;
@@ -47,6 +47,10 @@ async function ensureCriticalApplicationColumns() {
   await pool.query(`
     ALTER TABLE applications
     ADD COLUMN IF NOT EXISTS is_remote boolean NOT NULL DEFAULT true
+  `);
+  await pool.query(`
+    ALTER TABLE scraped_jobs
+    ADD COLUMN IF NOT EXISTS external_job_id text NOT NULL DEFAULT ''
   `);
 }
 
@@ -231,7 +235,7 @@ async function createSchema() {
     CREATE TABLE IF NOT EXISTS scraped_jobs (
       id uuid PRIMARY KEY,
       user_id uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      profile_id uuid NOT NULL REFERENCES resume_profiles(id) ON DELETE CASCADE,
+      profile_ids uuid[] NOT NULL DEFAULT '{}',
       platform text NOT NULL,
       job_title text NOT NULL,
       company_name text NOT NULL,
@@ -239,7 +243,7 @@ async function createSchema() {
       dedupe_key text NOT NULL,
       verified boolean NOT NULL DEFAULT false,
       created_at timestamptz NOT NULL,
-      UNIQUE (user_id, profile_id, dedupe_key)
+      UNIQUE (user_id, dedupe_key)
     )
   `);
   await pool.query(`
@@ -259,6 +263,10 @@ async function createSchema() {
     ADD COLUMN IF NOT EXISTS source text
   `);
   await pool.query(`
+    ALTER TABLE scraped_jobs
+    ADD COLUMN IF NOT EXISTS external_job_id text NOT NULL DEFAULT ''
+  `);
+  await pool.query(`
     UPDATE scraped_jobs
     SET source = COALESCE(NULLIF(source, ''), platform, 'jobright')
     WHERE source IS NULL OR source = ''
@@ -272,36 +280,139 @@ async function createSchema() {
     ALTER COLUMN source SET NOT NULL
   `);
   await pool.query(`
+    ALTER TABLE scraped_jobs
+    ADD COLUMN IF NOT EXISTS profile_ids uuid[] NOT NULL DEFAULT '{}'
+  `);
+  await pool.query(`
     DO $$
     DECLARE
       constraint_name text;
     BEGIN
-      FOR constraint_name IN
-        SELECT con.conname
-        FROM pg_constraint con
-        WHERE con.conrelid = 'scraped_jobs'::regclass
-          AND con.contype = 'u'
-          AND pg_get_constraintdef(con.oid) NOT LIKE '%profile_id%'
-      LOOP
-        EXECUTE format('ALTER TABLE scraped_jobs DROP CONSTRAINT %I', constraint_name);
-      END LOOP;
+      IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'scraped_jobs'
+          AND column_name = 'profile_id'
+      ) THEN
+        UPDATE scraped_jobs
+        SET profile_ids = ARRAY(
+          SELECT DISTINCT pid
+          FROM unnest(COALESCE(profile_ids, '{}') || ARRAY[profile_id]) AS ids(pid)
+          WHERE pid IS NOT NULL
+        )
+        WHERE profile_id IS NOT NULL;
+
+        UPDATE scraped_jobs AS keep
+        SET profile_ids = (
+          SELECT ARRAY(
+            SELECT DISTINCT pid
+            FROM scraped_jobs AS row
+            CROSS JOIN LATERAL unnest(row.profile_ids) AS ids(pid)
+            WHERE row.user_id = keep.user_id
+              AND row.dedupe_key = keep.dedupe_key
+              AND pid IS NOT NULL
+          )
+        )
+        WHERE keep.id IN (
+          SELECT (array_agg(id ORDER BY created_at DESC))[1]
+          FROM scraped_jobs
+          GROUP BY user_id, dedupe_key
+        );
+
+        DELETE FROM scraped_jobs AS extra
+        USING (
+          SELECT user_id,
+                 dedupe_key,
+                 (array_agg(id ORDER BY created_at DESC))[1] AS keep_id
+          FROM scraped_jobs
+          GROUP BY user_id, dedupe_key
+          HAVING count(*) > 1
+        ) AS grouped
+        WHERE extra.user_id = grouped.user_id
+          AND extra.dedupe_key = grouped.dedupe_key
+          AND extra.id <> grouped.keep_id;
+
+        FOR constraint_name IN
+          SELECT con.conname
+          FROM pg_constraint con
+          JOIN pg_attribute att
+            ON att.attrelid = con.conrelid
+           AND att.attnum = ANY(con.conkey)
+          WHERE con.conrelid = 'scraped_jobs'::regclass
+            AND con.contype = 'f'
+            AND att.attname = 'profile_id'
+        LOOP
+          EXECUTE format('ALTER TABLE scraped_jobs DROP CONSTRAINT %I', constraint_name);
+        END LOOP;
+
+        FOR constraint_name IN
+          SELECT con.conname
+          FROM pg_constraint con
+          WHERE con.conrelid = 'scraped_jobs'::regclass
+            AND con.contype = 'u'
+            AND pg_get_constraintdef(con.oid) LIKE '%profile_id%'
+        LOOP
+          EXECUTE format('ALTER TABLE scraped_jobs DROP CONSTRAINT %I', constraint_name);
+        END LOOP;
+
+        DROP INDEX IF EXISTS scraped_jobs_lookup_idx;
+        ALTER TABLE scraped_jobs DROP COLUMN profile_id;
+      END IF;
+
       IF NOT EXISTS (
         SELECT 1
         FROM pg_constraint
         WHERE conrelid = 'scraped_jobs'::regclass
           AND contype = 'u'
-          AND pg_get_constraintdef(oid) LIKE '%profile_id%'
+          AND pg_get_constraintdef(oid) LIKE '%user_id%'
           AND pg_get_constraintdef(oid) LIKE '%dedupe_key%'
+          AND pg_get_constraintdef(oid) NOT LIKE '%profile_id%'
       ) THEN
         ALTER TABLE scraped_jobs
-          ADD CONSTRAINT scraped_jobs_user_profile_dedupe_key
-          UNIQUE (user_id, profile_id, dedupe_key);
+          ADD CONSTRAINT scraped_jobs_user_dedupe_key
+          UNIQUE (user_id, dedupe_key);
       END IF;
     END $$;
   `);
   await pool.query(`
+    DROP INDEX IF EXISTS scraped_jobs_lookup_idx
+  `);
+  await pool.query(`
     CREATE INDEX IF NOT EXISTS scraped_jobs_lookup_idx
-    ON scraped_jobs (user_id, profile_id, platform, created_at DESC)
+    ON scraped_jobs (user_id, platform, created_at DESC)
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS scraped_jobs_profile_ids_idx
+    ON scraped_jobs USING GIN (profile_ids)
+  `);
+  await pool.query(`
+    CREATE OR REPLACE FUNCTION scraped_jobs_drop_profile()
+    RETURNS trigger
+    LANGUAGE plpgsql
+    AS $fn$
+    BEGIN
+      UPDATE scraped_jobs
+      SET profile_ids = ARRAY(
+        SELECT pid
+        FROM unnest(profile_ids) AS ids(pid)
+        WHERE pid <> OLD.id
+      )
+      WHERE profile_ids && ARRAY[OLD.id];
+      DELETE FROM scraped_jobs
+      WHERE cardinality(profile_ids) = 0;
+      RETURN OLD;
+    END;
+    $fn$
+  `);
+  await pool.query(`
+    DROP TRIGGER IF EXISTS scraped_jobs_drop_profile ON resume_profiles
+  `);
+  await pool.query(`
+    CREATE TRIGGER scraped_jobs_drop_profile
+    BEFORE DELETE ON resume_profiles
+    FOR EACH ROW
+    EXECUTE FUNCTION scraped_jobs_drop_profile()
   `);
   await pool.query(`
     DELETE FROM scraped_jobs

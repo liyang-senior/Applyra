@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { isLinkedInJobLink, jobDedupeKey } from "@/lib/scrape/dedupe";
-import type { ScrapedJobDraft } from "@/lib/scrape/jobright";
+import { jobrightIdFromLink, type ScrapedJobDraft } from "@/lib/scrape/jobright";
 import { withDb } from "@/lib/server/db";
 
 export type SavedJobLink = {
@@ -14,6 +14,7 @@ export type SavedJobLink = {
   createdAt: string;
   matchScore: number | null;
   postedAt: string | null;
+  jobrightJobId: string;
 };
 
 type JobRow = {
@@ -27,6 +28,7 @@ type JobRow = {
   created_at: Date | string;
   match_score: number | null;
   posted_at: Date | string | null;
+  external_job_id: string | null;
 };
 
 const UUID =
@@ -48,6 +50,7 @@ function toJob(row: JobRow): SavedJobLink {
     createdAt: new Date(row.created_at).toISOString(),
     matchScore: row.match_score == null ? null : Number(row.match_score),
     postedAt: row.posted_at ? new Date(row.posted_at).toISOString() : null,
+    jobrightJobId: row.external_job_id || jobrightIdFromLink(row.job_link),
   };
 }
 
@@ -73,15 +76,26 @@ export async function listScrapedJobs(
     }
     const result = await client.query<JobRow>(
       `SELECT id, job_title, company_name, job_link, profile_id, profile_name,
-              verified, created_at, match_score, posted_at
+              verified, created_at, match_score, posted_at, external_job_id
        FROM (
          SELECT DISTINCT ON (COALESCE(NULLIF(j.dedupe_key, ''), j.id::text))
-           j.id, j.job_title, j.company_name, j.job_link, j.profile_id,
+           j.id, j.job_title, j.company_name, j.job_link,
+           (
+             SELECT pid
+             FROM unnest(j.profile_ids) AS ids(pid)
+             WHERE pid = ANY($1::uuid[])
+             LIMIT 1
+           ) AS profile_id,
            COALESCE(p.data->>'name', '') AS profile_name,
-           j.verified, j.created_at, j.match_score, j.posted_at
+           j.verified, j.created_at, j.match_score, j.posted_at, j.external_job_id
          FROM scraped_jobs j
-         JOIN resume_profiles p ON p.id = j.profile_id
-         WHERE j.profile_id = ANY($1::uuid[])
+         JOIN resume_profiles p ON p.id = (
+           SELECT pid
+           FROM unnest(j.profile_ids) AS ids(pid)
+           WHERE pid = ANY($1::uuid[])
+           LIMIT 1
+         )
+         WHERE j.profile_ids && $1::uuid[]
            ${userClause}
            ${platformClause}
            AND j.job_link !~* '(^|://|\\.)linkedin\\.com([/:?#]|$)'
@@ -118,11 +132,11 @@ export async function saveScrapedJobs({
       }
       const result = await client.query<{ inserted: boolean }>(
         `INSERT INTO scraped_jobs (
-           id, user_id, profile_id, platform, job_title, company_name,
+           id, user_id, profile_ids, platform, job_title, company_name,
            job_link, dedupe_key, verified, created_at, match_score, posted_at,
-           source
+           source, external_job_id
          )
-         SELECT $1, $2, $3, $4, $5, $6, $7, $8,
+         SELECT $1, $2, ARRAY[$3::uuid], $4, $5, $6, $7, $8,
            EXISTS (
              SELECT 1
              FROM scraped_jobs existing
@@ -133,11 +147,22 @@ export async function saveScrapedJobs({
            NOW(),
            $10,
            $11,
-           $12
-         ON CONFLICT (user_id, profile_id, dedupe_key) DO UPDATE
-         SET match_score = COALESCE(EXCLUDED.match_score, scraped_jobs.match_score),
+           $12,
+           $13
+         ON CONFLICT (user_id, dedupe_key) DO UPDATE
+         SET profile_ids = (
+               SELECT ARRAY(
+                 SELECT DISTINCT pid
+                 FROM unnest(scraped_jobs.profile_ids || EXCLUDED.profile_ids) AS ids(pid)
+               )
+             ),
+             match_score = COALESCE(EXCLUDED.match_score, scraped_jobs.match_score),
              posted_at = COALESCE(EXCLUDED.posted_at, scraped_jobs.posted_at),
-             source = COALESCE(NULLIF(scraped_jobs.source, ''), EXCLUDED.source)
+             source = COALESCE(NULLIF(scraped_jobs.source, ''), EXCLUDED.source),
+             external_job_id = COALESCE(
+               NULLIF(EXCLUDED.external_job_id, ''),
+               scraped_jobs.external_job_id
+             )
          RETURNING (xmax = 0) AS inserted`,
         [
           randomUUID(),
@@ -152,6 +177,7 @@ export async function saveScrapedJobs({
           job.matchScore,
           job.postedAt,
           platform,
+          job.jobrightJobId || jobrightIdFromLink(job.jobLink),
         ],
       );
       if (result.rows[0]?.inserted) added += 1;
@@ -175,11 +201,65 @@ export async function deleteScrapedJobsForProfiles(profileIds: string[]) {
   const clean = jobIds(profileIds);
   if (clean.length === 0) return 0;
   return withDb(async (client) => {
-    const result = await client.query(
-      `DELETE FROM scraped_jobs WHERE profile_id = ANY($1::uuid[])`,
+    const removed = await client.query(
+      `DELETE FROM scraped_jobs
+       WHERE profile_ids && $1::uuid[]
+         AND NOT EXISTS (
+           SELECT 1
+           FROM unnest(profile_ids) AS ids(pid)
+           WHERE NOT (pid = ANY($1::uuid[]))
+         )`,
       [clean],
     );
-    return result.rowCount || 0;
+    await client.query(
+      `UPDATE scraped_jobs
+       SET profile_ids = ARRAY(
+         SELECT pid
+         FROM unnest(profile_ids) AS ids(pid)
+         WHERE NOT (pid = ANY($1::uuid[]))
+       )
+       WHERE profile_ids && $1::uuid[]`,
+      [clean],
+    );
+    return removed.rowCount || 0;
+  });
+}
+
+export async function listScrapedJobsByIds(
+  userId: string,
+  ids: string[],
+  options: { allUsers?: boolean } = {},
+) {
+  const clean = jobIds(ids);
+  if (clean.length === 0) return [] as SavedJobLink[];
+  return withDb(async (client) => {
+    const result = options.allUsers
+      ? await client.query<JobRow>(
+          `SELECT j.id, j.job_title, j.company_name, j.job_link,
+                  j.profile_ids[1] AS profile_id,
+                  COALESCE(p.data->>'name', '') AS profile_name,
+                  j.verified, j.created_at, j.match_score, j.posted_at, j.external_job_id
+           FROM scraped_jobs j
+           LEFT JOIN resume_profiles p ON p.id = j.profile_ids[1]
+           WHERE j.id = ANY($1::uuid[])`,
+          [clean],
+        )
+      : await client.query<JobRow>(
+          `SELECT j.id, j.job_title, j.company_name, j.job_link,
+                  j.profile_ids[1] AS profile_id,
+                  COALESCE(p.data->>'name', '') AS profile_name,
+                  j.verified, j.created_at, j.match_score, j.posted_at, j.external_job_id
+           FROM scraped_jobs j
+           LEFT JOIN resume_profiles p ON p.id = j.profile_ids[1]
+           WHERE j.id = ANY($2::uuid[])
+             AND EXISTS (
+               SELECT 1 FROM resume_profile_assignees assignee
+               WHERE assignee.profile_id = ANY(j.profile_ids)
+                 AND assignee.user_id = $1
+             )`,
+          [userId, clean],
+        );
+    return result.rows.map(toJob);
   });
 }
 
@@ -201,7 +281,7 @@ export async function deleteScrapedJobs(
            WHERE target.id = ANY($2::uuid[])
              AND EXISTS (
                SELECT 1 FROM resume_profile_assignees assignee
-               WHERE assignee.profile_id = target.profile_id
+               WHERE assignee.profile_id = ANY(target.profile_ids)
                  AND assignee.user_id = $1
              )`,
           [userId, clean],
@@ -236,7 +316,7 @@ export async function verifyScrapedJobs(
            SET verified = $3
            WHERE EXISTS (
                SELECT 1 FROM resume_profile_assignees assignee
-               WHERE assignee.profile_id = target.profile_id
+               WHERE assignee.profile_id = ANY(target.profile_ids)
                  AND assignee.user_id = $1
              )
              AND EXISTS (
@@ -246,7 +326,7 @@ export async function verifyScrapedJobs(
                  AND source.dedupe_key = target.dedupe_key
                  AND EXISTS (
                    SELECT 1 FROM resume_profile_assignees assignee
-                   WHERE assignee.profile_id = source.profile_id
+                   WHERE assignee.profile_id = ANY(source.profile_ids)
                      AND assignee.user_id = $1
                  )
              )`,

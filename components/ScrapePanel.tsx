@@ -22,6 +22,7 @@ type ScrapedJob = {
   createdAt: string;
   matchScore: number | null;
   postedAt: string | null;
+  jobrightJobId?: string;
 };
 
 type SortKey = "company" | "title" | "link" | "match" | "posted";
@@ -128,7 +129,9 @@ export function ScrapePanel({
   const [jobrightSignedIn, setJobrightSignedIn] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [bulkPending, setBulkPending] = useState<"" | "remove" | "remove-all" | "verify">("");
+  const [bulkPending, setBulkPending] = useState<
+    "" | "remove" | "remove-all" | "verify" | "applied"
+  >("");
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -528,6 +531,71 @@ export function ScrapePanel({
     }
   }
 
+  async function markApplied(ids: string[]) {
+    if (ids.length === 0) return;
+    const cookieReady = authMethod === "token" && jobrightToken.trim().length > 0;
+    if (authMethod === "token" ? !cookieReady : !jobrightSignedIn) {
+      showToast(
+        authMethod === "token"
+          ? "Paste the Jobright Cookie header."
+          : "Log in before marking jobs applied.",
+        "error",
+      );
+      return;
+    }
+    if (!credentialsReady()) return;
+    setBulkPending("applied");
+    try {
+      const response = await fetch("/api/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "applied",
+          ids,
+          auth: jobrightAuth(),
+        }),
+      });
+      if (!response.ok) {
+        showToast(await readError(response), "error");
+        return;
+      }
+      const data = (await response.json()) as {
+        applied?: number;
+        missing?: number;
+        failed?: number;
+        removedIds?: string[];
+      };
+      const removed = new Set(data.removedIds || []);
+      setJobs((current) => current.filter((job) => !removed.has(job.id)));
+      setSelectedIds((current) => current.filter((id) => !removed.has(id)));
+      const applied = data.applied || 0;
+      const missing = data.missing || 0;
+      const failed = data.failed || 0;
+      if (applied === 0) {
+        showToast(
+          missing > 0
+            ? "Those links have no Jobright job id. Scrape them again, then mark them applied."
+            : "Jobright could not mark those jobs applied.",
+          "error",
+        );
+        return;
+      }
+      const extra = [
+        missing > 0 ? `${missing} had no Jobright job id` : "",
+        failed > 0 ? `${failed} failed` : "",
+      ]
+        .filter(Boolean)
+        .join(", ");
+      showToast(
+        `Marked ${applied} applied.${extra ? ` ${extra}.` : ""}`,
+      );
+    } catch {
+      showToast("Could not mark those jobs applied.", "error");
+    } finally {
+      setBulkPending("");
+    }
+  }
+
   function copySelected() {
     const chosen = new Set(selectedIds);
     const links = jobs.filter((job) => chosen.has(job.id)).map((job) => job.jobLink);
@@ -885,6 +953,18 @@ export function ScrapePanel({
                   onClick={() => setSelectedIds(visibleJobs.map((job) => job.id))}
                 >
                   Select all
+                </button>
+                <button
+                  type="button"
+                  className="rounded-xl bg-[var(--green)] px-3 py-2 text-sm font-medium text-white transition duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:hover:translate-y-0"
+                  disabled={busy || selectedIds.length === 0}
+                  onClick={() => void markApplied(selectedIds)}
+                >
+                  {bulkPending === "applied"
+                    ? "Marking…"
+                    : selectedIds.length > 0
+                      ? `Mark applied (${selectedIds.length})`
+                      : "Mark applied"}
                 </button>
                 <button
                   type="button"

@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import { userCanAccessProfile } from "@/lib/profiles";
 import { isJobPlatform } from "@/lib/scrape/platforms";
 import {
+  jobrightIdFromLink,
+  markJobrightApplied,
   parseJobrightAuth,
   parseJobrightFilters,
   recommendJobright,
+  resolveJobrightSession,
   searchJobright,
   verifyJobrightLogin,
 } from "@/lib/scrape/jobright";
@@ -13,6 +16,7 @@ import {
   deleteScrapedJobs,
   deleteScrapedJobsForProfiles,
   listScrapedJobs,
+  listScrapedJobsByIds,
   saveScrapedJobs,
   verifyScrapedJobs,
 } from "@/lib/scrape/store";
@@ -63,6 +67,7 @@ export async function POST(request: Request) {
     mode?: string;
     filters?: unknown;
     auth?: unknown;
+    ids?: string[];
   };
   try {
     body = (await request.json()) as typeof body;
@@ -79,6 +84,68 @@ export async function POST(request: Request) {
         error instanceof Error && error.message
           ? error.message
           : "Jobright sign-in failed. Try again.";
+      const status =
+        message.startsWith("Enter") ||
+        message.startsWith("Paste") ||
+        message.startsWith("Jobright email") ||
+        message.startsWith("Jobright rejected")
+          ? 400
+          : 502;
+      return jsonError(message, status);
+    }
+  }
+
+  if (body.mode === "applied") {
+    const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
+    if (ids.length === 0) return jsonError("Select at least one link.", 400);
+    try {
+      const sessionId = await resolveJobrightSession(parseJobrightAuth(body.auth));
+      const rows = await listScrapedJobsByIds(user.id, ids, {
+        allUsers: canManageAccounts(user.role),
+      });
+      if (rows.length === 0) return jsonError("Job links not found.", 404);
+      const removedIds: string[] = [];
+      let missing = 0;
+      let failed = 0;
+      for (const row of rows) {
+        const jobId = row.jobrightJobId || jobrightIdFromLink(row.jobLink);
+        if (!jobId) {
+          missing += 1;
+          continue;
+        }
+        try {
+          await markJobrightApplied(sessionId, jobId);
+          removedIds.push(row.id);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "";
+          if (
+            message.startsWith("Jobright rejected") ||
+            message.startsWith("Jobright email") ||
+            message.startsWith("Enter") ||
+            message.startsWith("Paste")
+          ) {
+            throw error;
+          }
+          failed += 1;
+        }
+      }
+      if (removedIds.length > 0) {
+        await deleteScrapedJobs(user.id, removedIds, {
+          allUsers: canManageAccounts(user.role),
+        });
+      }
+      return NextResponse.json({
+        ok: true,
+        applied: removedIds.length,
+        missing,
+        failed,
+        removedIds,
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : "Jobright could not mark those jobs applied.";
       const status =
         message.startsWith("Enter") ||
         message.startsWith("Paste") ||

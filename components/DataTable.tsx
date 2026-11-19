@@ -123,7 +123,7 @@ export function DataTable({
   return (
     <>
       <div
-        className="max-w-full overflow-x-auto rounded-3xl border border-[var(--line)] bg-white shadow-[0_18px_40px_rgba(48,36,20,0.05)]"
+        className="app-table-frame max-w-full overflow-auto overscroll-y-contain rounded-3xl border border-[var(--line)] bg-white shadow-[0_18px_40px_rgba(48,36,20,0.05)]"
         onMouseDown={onMouseDown}
       >
         <table

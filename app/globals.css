@@ -262,9 +262,21 @@ input[type="reset"]:disabled {
   font-size: 0.875rem;
 }
 
+.app-table-frame {
+  max-height: min(32rem, calc(100dvh - 12rem));
+}
+
 .app-table thead {
   background: linear-gradient(90deg, #f4fbf7, #fdf8ef 55%, #f3fafb);
   color: var(--muted);
+}
+
+.app-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: #f4fbf7;
+  background-image: linear-gradient(90deg, #f4fbf7, #fdf8ef 55%, #f3fafb);
 }
 
 .app-table th {
