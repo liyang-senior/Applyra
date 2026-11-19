@@ -139,6 +139,7 @@ export function ScrapePanel({
   const [sortKey, setSortKey] = useState<SortKey>("match");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const scrapeAbort = useRef<AbortController | null>(null);
+  const jobsRequest = useRef(0);
 
   useEffect(() => {
     if (!filtersOpen) return;
@@ -169,36 +170,37 @@ export function ScrapePanel({
   }, [selectedProfile?.id, selectedProfile?.email]);
 
   useEffect(() => {
+    const requestId = jobsRequest.current + 1;
+    jobsRequest.current = requestId;
+    setJobs([]);
+    setSelectedIds([]);
     if (!profileId) {
-      setJobs([]);
+      setLoading(false);
       return;
     }
-    let cancelled = false;
-    setSelectedIds([]);
     setLoading(true);
     const params = new URLSearchParams();
     params.set("profileId", profileId);
     void fetch(`/api/scrape?${params.toString()}`)
       .then(async (response) => {
+        if (jobsRequest.current !== requestId) return;
         if (!response.ok) {
-          if (!cancelled) showToast(await readError(response), "error");
+          showToast(await readError(response), "error");
+          setJobs([]);
           return;
         }
         const data = (await response.json()) as { jobs?: ScrapedJob[] };
-        if (!cancelled) {
-          const rows = Array.isArray(data.jobs) ? data.jobs : [];
-          setJobs(rows.filter((job) => job.profileId === profileId));
-        }
+        const rows = Array.isArray(data.jobs) ? data.jobs : [];
+        setJobs(rows.filter((job) => job.profileId === profileId));
       })
       .catch(() => {
-        if (!cancelled) showToast("Could not load saved links.", "error");
+        if (jobsRequest.current !== requestId) return;
+        showToast("Could not load saved links.", "error");
+        setJobs([]);
       })
       .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (jobsRequest.current === requestId) setLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
   }, [profileId, showToast]);
 
   const visibleJobs = useMemo(() => {
@@ -725,6 +727,8 @@ export function ScrapePanel({
                 onChange={(event) => {
                   const nextId = event.target.value;
                   setProfileId(nextId);
+                  setJobs([]);
+                  setSelectedIds([]);
                   setJobrightSignedIn(false);
                   setJobrightEmail(
                     visibleProfiles.find((profile) => profile.id === nextId)?.email || "",
@@ -938,6 +942,7 @@ export function ScrapePanel({
               <div>
                 <h2 className="font-[family-name:var(--font-fraunces)] text-2xl tracking-tight">
                   Saved links
+                  {selectedProfile ? ` · ${selectedProfile.name}` : ""}
                   {loading
                     ? ""
                     : search.trim()

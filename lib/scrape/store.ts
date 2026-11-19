@@ -107,7 +107,12 @@ export async function listScrapedJobs(
        ORDER BY verified ASC, created_at DESC`,
       params,
     );
-    return { jobs: result.rows.map(toJob) };
+    const allowed = new Set(ids);
+    return {
+      jobs: result.rows
+        .map(toJob)
+        .filter((job) => allowed.has(job.profileId)),
+    };
   });
 }
 

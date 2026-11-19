@@ -31,27 +31,17 @@ export async function GET(request: Request) {
   if (!user) return jsonError("Sign in required.", 401);
 
   const url = new URL(request.url);
-  const profileIds = [
-    ...url.searchParams.getAll("profileId"),
-    ...(url.searchParams.get("profileIds") || "").split(","),
-  ]
-    .map((id) => id.trim())
-    .filter(Boolean);
-  const uniqueProfileIds = [...new Set(profileIds)];
+  const profileId = (url.searchParams.get("profileId") || "").trim();
   const platform = url.searchParams.get("platform") || "";
-  if (uniqueProfileIds.length === 0) {
-    return jsonError("Select a profile.", 400);
-  }
+  if (!profileId) return jsonError("Select a profile.", 400);
   if (platform && !isJobPlatform(platform)) {
     return jsonError("Unknown platform.", 400);
   }
-  for (const profileId of uniqueProfileIds) {
-    if (!(await userCanAccessProfile(user, profileId))) {
-      return jsonError("Profile not found.", 404);
-    }
+  if (!(await userCanAccessProfile(user, profileId))) {
+    return jsonError("Profile not found.", 404);
   }
 
-  const { jobs } = await listScrapedJobs(user.id, uniqueProfileIds, platform, {
+  const { jobs } = await listScrapedJobs(user.id, [profileId], platform, {
     allUsers: true,
   });
   return NextResponse.json({ jobs });
