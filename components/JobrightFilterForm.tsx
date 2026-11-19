@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { FloatingMenu } from "@/components/FloatingMenu";
 import { encodeCompanies, parseCompanies } from "@/lib/scrape/companies";
 import { encodeJobFunctions, parseJobFunctions } from "@/lib/scrape/job-functions";
 
@@ -282,6 +283,7 @@ function JobFunctionPicker({
   }
 
   const choices = options.filter((option) => !selected.some((item) => item.taxonomyId === option.taxonomyId));
+  const anchorRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="space-y-2">
@@ -315,7 +317,7 @@ function JobFunctionPicker({
         </div>
       ))}
       {selected.length < 5 ? (
-        <div className="relative">
+        <div ref={anchorRef} className="relative">
           <input
             className="w-full rounded-xl border border-[var(--line)] bg-[var(--paper)] px-3 py-2.5 text-sm"
             value={query}
@@ -337,11 +339,13 @@ function JobFunctionPicker({
               }
             }}
           />
-          {open && query.trim() && choices.length > 0 ? (
-            <ul
-              role="listbox"
-              className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-[var(--line)] bg-[var(--card)] py-1 shadow-[0_12px_30px_rgba(48,36,20,0.12)]"
-            >
+          <FloatingMenu
+            anchorRef={anchorRef}
+            open={open && query.trim().length > 0 && choices.length > 0}
+            onDismiss={() => setOpen(false)}
+            className="overflow-y-auto rounded-xl border border-[var(--line)] bg-[var(--card)] py-1 shadow-[0_12px_30px_rgba(48,36,20,0.12)]"
+          >
+            <ul role="listbox">
               {choices.map((option) => (
                 <li key={option.taxonomyId}>
                   <button
@@ -359,7 +363,7 @@ function JobFunctionPicker({
                 </li>
               ))}
             </ul>
-          ) : null}
+          </FloatingMenu>
         </div>
       ) : null}
     </div>
@@ -420,6 +424,7 @@ function CompanyPicker({
   const choices = options.filter(
     (option) => !selected.some((item) => item.companyId === option.companyId),
   );
+  const anchorRef = useRef<HTMLDivElement>(null);
 
   return (
     <div className="space-y-2">
@@ -457,7 +462,7 @@ function CompanyPicker({
         </div>
       ))}
       {selected.length < 12 ? (
-        <div className="relative">
+        <div ref={anchorRef} className="relative">
           <input
             className="w-full rounded-xl border border-[var(--line)] bg-[var(--paper)] px-3 py-2.5 text-sm"
             value={query}
@@ -479,11 +484,13 @@ function CompanyPicker({
               }
             }}
           />
-          {open && query.trim() && choices.length > 0 ? (
-            <ul
-              role="listbox"
-              className="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-[var(--line)] bg-[var(--card)] py-1 shadow-[0_12px_30px_rgba(48,36,20,0.12)]"
-            >
+          <FloatingMenu
+            anchorRef={anchorRef}
+            open={open && query.trim().length > 0 && choices.length > 0}
+            onDismiss={() => setOpen(false)}
+            className="overflow-y-auto rounded-xl border border-[var(--line)] bg-[var(--card)] py-1 shadow-[0_12px_30px_rgba(48,36,20,0.12)]"
+          >
+            <ul role="listbox">
               {choices.map((option) => (
                 <li key={option.companyId}>
                   <button
@@ -498,7 +505,7 @@ function CompanyPicker({
                 </li>
               ))}
             </ul>
-          ) : null}
+          </FloatingMenu>
         </div>
       ) : null}
     </div>

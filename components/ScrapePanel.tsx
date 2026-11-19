@@ -104,7 +104,7 @@ async function readError(response: Response) {
 export function ScrapePanel({
   profiles,
   assignees,
-  seeAll = false,
+  seeAll: _seeAll = false,
 }: {
   profiles: ResumeProfileListItem[];
   assignees?: Account[];
@@ -151,17 +151,22 @@ export function ScrapePanel({
     };
   }, [filtersOpen]);
 
-  const seesAllLinks = seeAll;
-  const listedProfileIds = seesAllLinks
-    ? visibleProfiles.map((profile) => profile.id)
-    : profileId
-      ? [profileId]
-      : [];
-  const listedKey = listedProfileIds.join(",");
+  const visibleKey = visibleProfiles.map((profile) => profile.id).join(",");
+  const selectedProfile =
+    visibleProfiles.find((profile) => profile.id === profileId) || null;
 
   useEffect(() => {
-    const profileIds = listedKey ? listedKey.split(",") : [];
-    if (profileIds.length === 0) {
+    if (selectedProfile) return;
+    const next = visibleProfiles[0];
+    setProfileId(next?.id || "");
+  }, [visibleKey, selectedProfile, visibleProfiles]);
+
+  useEffect(() => {
+    setJobrightEmail(selectedProfile?.email || "");
+  }, [selectedProfile?.id, selectedProfile?.email]);
+
+  useEffect(() => {
+    if (!profileId) {
       setJobs([]);
       return;
     }
@@ -169,8 +174,7 @@ export function ScrapePanel({
     setSelectedIds([]);
     setLoading(true);
     const params = new URLSearchParams();
-    for (const id of profileIds) params.append("profileId", id);
-    if (!seesAllLinks && platform) params.set("platform", platform);
+    params.set("profileId", profileId);
     void fetch(`/api/scrape?${params.toString()}`)
       .then(async (response) => {
         if (!response.ok) {
@@ -178,7 +182,10 @@ export function ScrapePanel({
           return;
         }
         const data = (await response.json()) as { jobs?: ScrapedJob[] };
-        if (!cancelled) setJobs(Array.isArray(data.jobs) ? data.jobs : []);
+        if (!cancelled) {
+          const rows = Array.isArray(data.jobs) ? data.jobs : [];
+          setJobs(rows.filter((job) => job.profileId === profileId));
+        }
       })
       .catch(() => {
         if (!cancelled) showToast("Could not load saved links.", "error");
@@ -189,24 +196,18 @@ export function ScrapePanel({
     return () => {
       cancelled = true;
     };
-  }, [listedKey, platform, seesAllLinks, showToast]);
-
-  useEffect(() => {
-    if (visibleProfiles.some((profile) => profile.id === profileId)) return;
-    const next = visibleProfiles[0];
-    setProfileId(next?.id || "");
-    setJobrightEmail(next?.email || "");
-  }, [visibleProfiles, profileId]);
+  }, [profileId, showToast]);
 
   const visibleJobs = useMemo(() => {
+    const owned = profileId ? jobs.filter((job) => job.profileId === profileId) : [];
     const query = search.trim().toLowerCase();
     const matched = query
-      ? jobs.filter((job) =>
+      ? owned.filter((job) =>
           `${job.companyName} ${job.jobTitle} ${job.jobLink}`
             .toLowerCase()
             .includes(query),
         )
-      : jobs;
+      : owned;
     const postedOf = (job: ScrapedJob) =>
       job.postedAt ? Date.parse(job.postedAt) || 0 : 0;
     return [...matched].sort((a, b) => {
@@ -230,7 +231,7 @@ export function ScrapePanel({
       }
       return sortDir === "asc" ? result : -result;
     });
-  }, [jobs, search, sortKey, sortDir]);
+  }, [jobs, profileId, search, sortKey, sortDir]);
 
   const { page: safePage, slice: pageRows } = useMemo(
     () => paginateItems(visibleJobs, page, pageSize),
@@ -257,7 +258,8 @@ export function ScrapePanel({
   }
 
   const allSelected =
-    pageRows.length > 0 && pageRows.every((job) => selectedIds.includes(job.id));
+    visibleJobs.length > 0 &&
+    visibleJobs.every((job) => selectedIds.includes(job.id));
 
   function toggleSelected(id: string) {
     setSelectedIds((current) =>
@@ -269,13 +271,11 @@ export function ScrapePanel({
 
   function toggleSelectAll() {
     if (allSelected) {
-      const visible = new Set(pageRows.map((job) => job.id));
+      const visible = new Set(visibleJobs.map((job) => job.id));
       setSelectedIds((current) => current.filter((id) => !visible.has(id)));
       return;
     }
-    setSelectedIds((current) => [
-      ...new Set([...current, ...pageRows.map((job) => job.id)]),
-    ]);
+    setSelectedIds(visibleJobs.map((job) => job.id));
   }
 
   async function copyText(text: string, okMessage: string) {
@@ -357,7 +357,7 @@ export function ScrapePanel({
       );
       return;
     }
-    if (!profileId) {
+    if (!selectedProfile) {
       showToast("Select a profile.", "error");
       return;
     }
@@ -379,7 +379,7 @@ export function ScrapePanel({
         headers: { "Content-Type": "application/json" },
         signal: controller.signal,
         body: JSON.stringify({
-          profileId,
+          profileId: selectedProfile.id,
           platform,
           mode: listMode,
           filters,
@@ -396,19 +396,12 @@ export function ScrapePanel({
         skipped?: number;
         jobs?: ScrapedJob[];
       };
-      if (seesAllLinks) {
-        const params = new URLSearchParams();
-        for (const id of visibleProfiles.map((profile) => profile.id)) {
-          params.append("profileId", id);
-        }
-        const refreshed = await fetch(`/api/scrape?${params.toString()}`);
-        const refreshedData = refreshed.ok
-          ? ((await refreshed.json()) as { jobs?: ScrapedJob[] })
-          : data;
-        setJobs(Array.isArray(refreshedData.jobs) ? refreshedData.jobs : []);
-      } else {
-        setJobs(Array.isArray(data.jobs) ? data.jobs : []);
-      }
+      const refreshed = await fetch(`/api/scrape?profileId=${encodeURIComponent(selectedProfile.id)}`);
+      const refreshedData = refreshed.ok
+        ? ((await refreshed.json()) as { jobs?: ScrapedJob[] })
+        : data;
+      const rows = Array.isArray(refreshedData.jobs) ? refreshedData.jobs : [];
+      setJobs(rows.filter((job) => job.profileId === selectedProfile.id));
       setSelectedIds([]);
       setPage(1);
       const added = data.added || 0;
@@ -441,18 +434,15 @@ export function ScrapePanel({
           void fetch(
             `/api/scrape?${(() => {
               const params = new URLSearchParams();
-              const ids = seesAllLinks
-                ? visibleProfiles.map((profile) => profile.id)
-                : [profileId];
-              for (const id of ids) params.append("profileId", id);
-              if (!seesAllLinks && platform) params.set("platform", platform);
+              if (profileId) params.set("profileId", profileId);
               return params;
             })()}`,
           )
             .then(async (response) => {
               if (!response.ok) return;
               const data = (await response.json()) as { jobs?: ScrapedJob[] };
-              setJobs(Array.isArray(data.jobs) ? data.jobs : []);
+              const rows = Array.isArray(data.jobs) ? data.jobs : [];
+              setJobs(profileId ? rows.filter((job) => job.profileId === profileId) : []);
               setSelectedIds([]);
               setPage(1);
             })
@@ -548,14 +538,8 @@ export function ScrapePanel({
   }
 
   async function removeAll() {
-    if (jobs.length === 0) return;
-    if (
-      !window.confirm(
-        seesAllLinks
-          ? "Remove every saved link for the profiles in this list?"
-          : "Remove all scraped links? This deletes every saved link, including ones on other pages.",
-      )
-    ) {
+    if (jobs.length === 0 || !profileId) return;
+    if (!window.confirm("Remove every saved link for this profile?")) {
       return;
     }
     setBulkPending("remove-all");
@@ -565,11 +549,7 @@ export function ScrapePanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           all: true,
-          profileIds: seesAllLinks
-            ? visibleProfiles.map((profile) => profile.id)
-            : profileId
-              ? [profileId]
-              : [],
+          profileIds: [profileId],
         }),
       });
       if (!response.ok) {
@@ -661,9 +641,11 @@ export function ScrapePanel({
             }}
           />
         ) : null}
-        <div className="scrape-rise relative w-full overflow-hidden rounded-3xl border border-[var(--line)] bg-[linear-gradient(135deg,#fffdf8_0%,#f4fbf7_42%,#fdf8ef_100%)] p-5 shadow-[0_16px_40px_rgba(48,36,20,0.06)] sm:p-6">
-          <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-[#e3f1f5]/80 blur-2xl" />
-          <div className="pointer-events-none absolute -bottom-16 left-10 h-32 w-32 rounded-full bg-[#f3e8f4]/70 blur-2xl" />
+        <div className="scrape-rise relative w-full rounded-3xl border border-[var(--line)] bg-[linear-gradient(135deg,#fffdf8_0%,#f4fbf7_42%,#fdf8ef_100%)] p-5 shadow-[0_16px_40px_rgba(48,36,20,0.06)] sm:p-6">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-3xl">
+            <div className="absolute -right-10 -top-16 h-40 w-40 rounded-full bg-[#e3f1f5]/80 blur-2xl" />
+            <div className="absolute -bottom-16 left-10 h-32 w-32 rounded-full bg-[#f3e8f4]/70 blur-2xl" />
+          </div>
           <div className="relative">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <label className="block text-sm">
@@ -683,12 +665,11 @@ export function ScrapePanel({
                 }}
               >
                 {visibleProfiles.length === 0 ? (
-                  <option value="">No profiles for the selected assignees</option>
+                  <option value="">No profiles</option>
                 ) : null}
                 {visibleProfiles.map((profile) => (
                   <option key={profile.id} value={profile.id}>
-                    {profile.name}
-                    {profile.title ? ` — ${profile.title}` : ""}
+                    {profile.title ? `${profile.name} — ${profile.title}` : profile.name}
                   </option>
                 ))}
               </select>
@@ -883,7 +864,7 @@ export function ScrapePanel({
           </div>
         </div>
 
-        {profileId ? (
+        {visibleProfiles.length > 0 ? (
           <div className="scrape-rise space-y-4" style={{ animationDelay: "80ms" }}>
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
@@ -897,6 +878,14 @@ export function ScrapePanel({
                 </h2>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  className="rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-sm font-medium transition duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:hover:translate-y-0"
+                  disabled={busy || visibleJobs.length === 0 || allSelected}
+                  onClick={() => setSelectedIds(visibleJobs.map((job) => job.id))}
+                >
+                  Select all
+                </button>
                 <button
                   type="button"
                   className="rounded-xl border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-3 py-2 text-sm font-medium text-[var(--danger)] transition duration-200 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:hover:translate-y-0"
@@ -983,9 +972,9 @@ export function ScrapePanel({
                         <input
                           type="checkbox"
                           className="h-4 w-4 accent-[var(--green)]"
-                          aria-label="Select all links on this page"
+                          aria-label="Select all links"
                           checked={allSelected}
-                          disabled={busy || pageRows.length === 0}
+                          disabled={busy || visibleJobs.length === 0}
                           onChange={toggleSelectAll}
                         />
                       </th>
@@ -1027,9 +1016,11 @@ export function ScrapePanel({
                         >
                           {loading
                             ? "Loading saved links…"
-                            : search.trim()
-                              ? "No links match that search."
-                              : "No job links yet. Run a scrape to collect them."}
+                            : !profileId
+                              ? "Select a profile to see its links."
+                              : search.trim()
+                                ? "No links match that search."
+                                : "No job links yet. Run a scrape to collect them."}
                         </td>
                       </tr>
                     ) : (

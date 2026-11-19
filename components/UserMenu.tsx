@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
+import { FloatingMenu } from "@/components/FloatingMenu";
 
 export function UserMenu({ name }: { name: string }) {
   const router = useRouter();
@@ -10,25 +11,6 @@ export function UserMenu({ name }: { name: string }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
-
-  useEffect(() => {
-    if (!open) return;
-
-    function onPointerDown(event: PointerEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    }
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
-
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
 
   return (
     <div ref={rootRef} className="relative">
@@ -42,12 +24,15 @@ export function UserMenu({ name }: { name: string }) {
       >
         {name}
       </button>
-      {open ? (
-        <div
-          id={menuId}
-          role="menu"
-          className="absolute right-0 top-full z-40 mt-2 min-w-[10rem] overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--card)] py-1 shadow-[0_12px_40px_rgba(48,36,20,0.12)]"
-        >
+      <FloatingMenu
+        anchorRef={rootRef}
+        open={open}
+        align="end"
+        minWidth={160}
+        onDismiss={() => setOpen(false)}
+        className="overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--card)] py-1 shadow-[0_12px_40px_rgba(48,36,20,0.12)]"
+      >
+        <div id={menuId} role="menu">
           <Link
             href="/dashboard/profile"
             role="menuitem"
@@ -76,7 +61,7 @@ export function UserMenu({ name }: { name: string }) {
             {pending ? "Signing out…" : "Sign out"}
           </button>
         </div>
-      ) : null}
+      </FloatingMenu>
     </div>
   );
 }

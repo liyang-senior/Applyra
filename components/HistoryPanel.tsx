@@ -102,8 +102,8 @@ export function HistoryPanel({
   }, [page, safePage]);
 
   const allSelected =
-    pageRows.length > 0 &&
-    pageRows.every((row) => selectedIds.includes(row.id));
+    filteredRecords.length > 0 &&
+    filteredRecords.every((row) => selectedIds.includes(row.id));
 
   function toggleSelected(id: string) {
     setSelectedIds((prev) =>
@@ -113,13 +113,11 @@ export function HistoryPanel({
 
   function toggleSelectAll() {
     if (allSelected) {
-      const visible = new Set(pageRows.map((row) => row.id));
+      const visible = new Set(filteredRecords.map((row) => row.id));
       setSelectedIds((prev) => prev.filter((id) => !visible.has(id)));
       return;
     }
-    setSelectedIds((prev) => [
-      ...new Set([...prev, ...pageRows.map((row) => row.id)]),
-    ]);
+    setSelectedIds(filteredRecords.map((row) => row.id));
   }
 
   function updateFilter<K extends keyof typeof filters>(
@@ -358,8 +356,17 @@ export function HistoryPanel({
         </label>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          className="rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-sm font-medium disabled:opacity-60"
+          disabled={pending || bulkPending || filteredRecords.length === 0 || allSelected}
+          onClick={() => setSelectedIds(filteredRecords.map((row) => row.id))}
+        >
+          Select all
+        </button>
       {selectedIds.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-2">
+        <>
           {canModerate ? (
             <button
               type="button"
@@ -388,8 +395,9 @@ export function HistoryPanel({
           >
             Clear selection
           </button>
-        </div>
+        </>
       ) : null}
+      </div>
 
       {error ? (
         <p className="text-sm text-[var(--danger)]">{error}</p>
@@ -410,7 +418,7 @@ export function HistoryPanel({
                     type="checkbox"
                     aria-label="Select all history"
                     checked={allSelected}
-                    disabled={pageRows.length === 0 || bulkPending || pending}
+                    disabled={filteredRecords.length === 0 || bulkPending || pending}
                     onChange={toggleSelectAll}
                   />
                 </th>

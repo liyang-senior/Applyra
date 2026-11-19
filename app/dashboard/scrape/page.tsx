@@ -32,12 +32,11 @@ export default async function ScrapePage() {
   return (
     <DashboardShell user={user} active="scrape">
       <PageHeading title="Job links">
-        Pick a profile and jobright.ai. A Jobright email and password, or the
-        Cookie header from a jobright.ai request, is required to collect
-        links. Neither is saved. Admins and the owner see every saved link.
-        The owner can narrow that list to selected assignees. Other accounts
-        see the links saved for an assigned profile. Each company and role
-        appears once. New links stay unverified until you check them.
+        Choose a profile to see its saved links. A Jobright email and
+        password, or the Cookie header from a jobright.ai request, is required
+        to collect links. Neither is saved. New links are saved to the
+        selected profile. Each company and role appears once. New links stay
+        unverified until you check them.
       </PageHeading>
       <ScrapePanel
         profiles={profiles}

@@ -126,8 +126,7 @@ export function ResumeProfilesTable({
   }
 
   const allVisibleSelected =
-    pageRows.length > 0 &&
-    pageRows.every((row) => selectedIds.includes(row.id));
+    rows.length > 0 && rows.every((row) => selectedIds.includes(row.id));
 
   function toggleSelected(id: string) {
     setSelectedIds((prev) =>
@@ -137,13 +136,11 @@ export function ResumeProfilesTable({
 
   function toggleSelectAllVisible() {
     if (allVisibleSelected) {
-      const visible = new Set(pageRows.map((row) => row.id));
+      const visible = new Set(rows.map((row) => row.id));
       setSelectedIds((prev) => prev.filter((id) => !visible.has(id)));
       return;
     }
-    setSelectedIds((prev) => [
-      ...new Set([...prev, ...pageRows.map((row) => row.id)]),
-    ]);
+    setSelectedIds(rows.map((row) => row.id));
   }
 
   async function removeIds(ids: string[]) {
@@ -257,6 +254,14 @@ export function ResumeProfilesTable({
       {canManage ? (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className="rounded-xl border border-[var(--line)] bg-white px-4 py-2.5 text-sm font-medium disabled:opacity-60"
+              disabled={bulkPending || rows.length === 0 || allVisibleSelected}
+              onClick={() => setSelectedIds(rows.map((row) => row.id))}
+            >
+              Select all
+            </button>
             <button
               type="button"
               className="rounded-xl border border-[var(--danger)]/30 bg-[var(--danger-soft)] px-4 py-2.5 text-sm font-medium text-[var(--danger)] disabled:opacity-60"
@@ -407,10 +412,10 @@ export function ResumeProfilesTable({
                   <th className="w-10 px-3 py-3 sm:px-4">
                     <input
                       type="checkbox"
-                      aria-label="Select all visible profiles"
+                      aria-label="Select all profiles"
                       checked={allVisibleSelected}
                       onChange={toggleSelectAllVisible}
-                      disabled={pageRows.length === 0 || bulkPending}
+                      disabled={rows.length === 0 || bulkPending}
                     />
                   </th>
                 ) : null}
