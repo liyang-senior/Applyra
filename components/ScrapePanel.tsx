@@ -265,6 +265,8 @@ export function ScrapePanel({
   const allSelected =
     visibleJobs.length > 0 &&
     visibleJobs.every((job) => selectedIds.includes(job.id));
+  const pageSelected =
+    pageRows.length > 0 && pageRows.every((job) => selectedIds.includes(job.id));
 
   function toggleSelected(id: string) {
     setSelectedIds((current) =>
@@ -274,13 +276,14 @@ export function ScrapePanel({
     );
   }
 
-  function toggleSelectAll() {
-    if (allSelected) {
-      const visible = new Set(visibleJobs.map((job) => job.id));
-      setSelectedIds((current) => current.filter((id) => !visible.has(id)));
+  function togglePageSelection() {
+    const pageIds = pageRows.map((job) => job.id);
+    if (pageSelected) {
+      const page = new Set(pageIds);
+      setSelectedIds((current) => current.filter((id) => !page.has(id)));
       return;
     }
-    setSelectedIds(visibleJobs.map((job) => job.id));
+    setSelectedIds((current) => [...new Set([...current, ...pageIds])]);
   }
 
   async function copyText(text: string, okMessage: string) {
@@ -1057,10 +1060,10 @@ export function ScrapePanel({
                         <input
                           type="checkbox"
                           className="h-4 w-4 accent-[var(--green)]"
-                          aria-label="Select all links"
-                          checked={allSelected}
-                          disabled={busy || visibleJobs.length === 0}
-                          onChange={toggleSelectAll}
+                          aria-label="Select links on this page"
+                          checked={pageSelected}
+                          disabled={busy || pageRows.length === 0}
+                          onChange={togglePageSelection}
                         />
                       </th>
                       <th className="px-4 py-3 text-center font-medium">
