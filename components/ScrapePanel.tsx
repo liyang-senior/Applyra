@@ -480,14 +480,15 @@ export function ScrapePanel({
     if (!window.confirm(`Remove ${label}?`)) return;
     setRemovingId(id);
     try {
-      const response = await fetch(
-        `/api/scrape?profileId=${encodeURIComponent(activeProfileId)}`,
-        {
-        method: "DELETE",
+      const response = await fetch("/api/scrape", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: [id], profileId: activeProfileId }),
-      },
-      );
+        body: JSON.stringify({
+          mode: "remove",
+          ids: [id],
+          profileId: activeProfileId,
+        }),
+      });
       if (!response.ok) {
         showToast(await readError(response), "error");
         return;
@@ -669,17 +670,15 @@ export function ScrapePanel({
     }
     setBulkPending("remove");
     try {
-      const response = await fetch(
-        `/api/scrape?profileId=${encodeURIComponent(activeProfileId)}`,
-        {
-        method: "DELETE",
+      const response = await fetch("/api/scrape", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          mode: "remove",
           ids: selectedIds,
           profileId: activeProfileId,
         }),
-      },
-      );
+      });
       if (!response.ok) {
         showToast(await readError(response), "error");
         return;
