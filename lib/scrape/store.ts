@@ -278,38 +278,36 @@ export async function deleteScrapedJobs(
   const profileId = jobIds([options.profileId || ""])[0] || "";
   return withDb(async (client) => {
     if (profileId) {
-      const result = await client.query<{ changed: string }>(
-        `WITH targets AS (
-           SELECT id, profile_ids
+      let changed = 0;
+      for (const id of clean) {
+        const found = await client.query<{ profile_ids: string[] }>(
+          `SELECT profile_ids
            FROM scraped_jobs
-           WHERE id = ANY($1::uuid[])
+           WHERE id = $1
              AND $2::uuid = ANY(profile_ids)
-         ),
-         removed AS (
-           DELETE FROM scraped_jobs
-           WHERE id IN (
-             SELECT id FROM targets WHERE cardinality(profile_ids) = 1
-           )
-           RETURNING id
-         ),
-         updated AS (
-           UPDATE scraped_jobs
-           SET profile_ids = ARRAY(
-             SELECT pid
-             FROM unnest(profile_ids) AS ids(pid)
-             WHERE pid <> $2::uuid
-           )
-           WHERE id IN (
-             SELECT id FROM targets WHERE cardinality(profile_ids) > 1
-           )
-           RETURNING id
-         )
-         SELECT (
-           (SELECT count(*) FROM removed) + (SELECT count(*) FROM updated)
-         )::text AS changed`,
-        [clean, profileId],
-      );
-      return Number(result.rows[0]?.changed || 0);
+           FOR UPDATE`,
+          [id, profileId],
+        );
+        const profileIds = found.rows[0]?.profile_ids;
+        if (!profileIds) continue;
+        const distinct = [...new Set(profileIds)];
+        if (distinct.length <= 1) {
+          await client.query(`DELETE FROM scraped_jobs WHERE id = $1`, [id]);
+        } else {
+          await client.query(
+            `UPDATE scraped_jobs
+             SET profile_ids = ARRAY(
+               SELECT DISTINCT pid
+               FROM unnest(profile_ids) AS ids(pid)
+               WHERE pid <> $2::uuid
+             )
+             WHERE id = $1`,
+            [id, profileId],
+          );
+        }
+        changed += 1;
+      }
+      return changed;
     }
     const result = options.allUsers
       ? await client.query(

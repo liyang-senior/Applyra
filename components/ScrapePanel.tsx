@@ -470,16 +470,24 @@ export function ScrapePanel({
   }
 
   async function removeJob(id: string) {
+    const activeProfileId = selectedProfile?.id || "";
+    if (!activeProfileId) {
+      showToast("Select a profile.", "error");
+      return;
+    }
     const job = jobs.find((item) => item.id === id);
     const label = job ? `${job.jobTitle} at ${job.companyName}` : "this link";
     if (!window.confirm(`Remove ${label}?`)) return;
     setRemovingId(id);
     try {
-      const response = await fetch("/api/scrape", {
+      const response = await fetch(
+        `/api/scrape?profileId=${encodeURIComponent(activeProfileId)}`,
+        {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: [id], profileId }),
-      });
+        body: JSON.stringify({ ids: [id], profileId: activeProfileId }),
+      },
+      );
       if (!response.ok) {
         showToast(await readError(response), "error");
         return;
@@ -644,6 +652,11 @@ export function ScrapePanel({
 
   async function removeSelected() {
     if (selectedIds.length === 0) return;
+    const activeProfileId = selectedProfile?.id || "";
+    if (!activeProfileId) {
+      showToast("Select a profile.", "error");
+      return;
+    }
     const count = selectedIds.length;
     if (
       !window.confirm(
@@ -656,11 +669,17 @@ export function ScrapePanel({
     }
     setBulkPending("remove");
     try {
-      const response = await fetch("/api/scrape", {
+      const response = await fetch(
+        `/api/scrape?profileId=${encodeURIComponent(activeProfileId)}`,
+        {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: selectedIds, profileId }),
-      });
+        body: JSON.stringify({
+          ids: selectedIds,
+          profileId: activeProfileId,
+        }),
+      },
+      );
       if (!response.ok) {
         showToast(await readError(response), "error");
         return;

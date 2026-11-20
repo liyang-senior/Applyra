@@ -258,7 +258,10 @@ export async function DELETE(request: Request) {
 
   const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
   if (ids.length === 0) return jsonError("Select at least one link.", 400);
-  const profileId = String(body.profileId || "");
+  const url = new URL(request.url);
+  const profileId = String(
+    body.profileId || url.searchParams.get("profileId") || "",
+  ).trim();
   if (!profileId) return jsonError("Select a profile.", 400);
   if (!(await userCanAccessProfile(user, profileId))) {
     return jsonError("Profile not found.", 404);
