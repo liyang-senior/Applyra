@@ -224,11 +224,12 @@ export async function DELETE(request: Request) {
   const user = await getRequestAccount(request);
   if (!user) return jsonError("Sign in required.", 401);
 
-  let body: { ids?: string[]; all?: boolean; profileIds?: string[] };
+  let body: { ids?: string[]; all?: boolean; profileId?: string; profileIds?: string[] };
   try {
     body = (await request.json()) as {
       ids?: string[];
       all?: boolean;
+      profileId?: string;
       profileIds?: string[];
     };
   } catch {
@@ -257,9 +258,12 @@ export async function DELETE(request: Request) {
 
   const ids = Array.isArray(body.ids) ? body.ids.map(String) : [];
   if (ids.length === 0) return jsonError("Select at least one link.", 400);
-  const deleted = await deleteScrapedJobs(user.id, ids, {
-    allUsers: canManageAccounts(user.role),
-  });
+  const profileId = String(body.profileId || "");
+  if (!profileId) return jsonError("Select a profile.", 400);
+  if (!(await userCanAccessProfile(user, profileId))) {
+    return jsonError("Profile not found.", 404);
+  }
+  const deleted = await deleteScrapedJobs(user.id, ids, { profileId });
   if (deleted === 0) return jsonError("Job links not found.", 404);
   return NextResponse.json({ ok: true, deleted });
 }

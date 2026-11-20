@@ -478,7 +478,7 @@ export function ScrapePanel({
       const response = await fetch("/api/scrape", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: [id] }),
+        body: JSON.stringify({ ids: [id], profileId }),
       });
       if (!response.ok) {
         showToast(await readError(response), "error");
@@ -659,7 +659,7 @@ export function ScrapePanel({
       const response = await fetch("/api/scrape", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: selectedIds }),
+        body: JSON.stringify({ ids: selectedIds, profileId }),
       });
       if (!response.ok) {
         showToast(await readError(response), "error");

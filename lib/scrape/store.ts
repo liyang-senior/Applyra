@@ -271,11 +271,46 @@ export async function listScrapedJobsByIds(
 export async function deleteScrapedJobs(
   userId: string,
   ids: string[],
-  options: { allUsers?: boolean } = {},
+  options: { allUsers?: boolean; profileId?: string } = {},
 ) {
   const clean = jobIds(ids);
   if (clean.length === 0) return 0;
+  const profileId = jobIds([options.profileId || ""])[0] || "";
   return withDb(async (client) => {
+    if (profileId) {
+      const result = await client.query<{ changed: string }>(
+        `WITH targets AS (
+           SELECT id, profile_ids
+           FROM scraped_jobs
+           WHERE id = ANY($1::uuid[])
+             AND $2::uuid = ANY(profile_ids)
+         ),
+         removed AS (
+           DELETE FROM scraped_jobs
+           WHERE id IN (
+             SELECT id FROM targets WHERE cardinality(profile_ids) = 1
+           )
+           RETURNING id
+         ),
+         updated AS (
+           UPDATE scraped_jobs
+           SET profile_ids = ARRAY(
+             SELECT pid
+             FROM unnest(profile_ids) AS ids(pid)
+             WHERE pid <> $2::uuid
+           )
+           WHERE id IN (
+             SELECT id FROM targets WHERE cardinality(profile_ids) > 1
+           )
+           RETURNING id
+         )
+         SELECT (
+           (SELECT count(*) FROM removed) + (SELECT count(*) FROM updated)
+         )::text AS changed`,
+        [clean, profileId],
+      );
+      return Number(result.rows[0]?.changed || 0);
+    }
     const result = options.allUsers
       ? await client.query(
           `DELETE FROM scraped_jobs WHERE id = ANY($1::uuid[])`,
